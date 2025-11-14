@@ -1,0 +1,207 @@
+/**
+ * TEMA VISUAL DO ATOMIC+
+ * 
+ * Este arquivo define as variáveis CSS que controlam
+ * a aparência do dashboard.
+ * 
+ * VARIÁVEIS PRINCIPAIS:
+ * - Cores: primária, sucesso, erro, fundo, texto
+ * - Raios: bordas arredondadas
+ * - Sombras: elevação dos cards
+ * - Animações: transições suaves
+ * 
+ * TEMAS DISPONÍVEIS:
+ * - .theme-default (padrão)
+ * - .theme-dark (modo escuro)
+ * - .theme-neon (neon creator)
+ * - .theme-minimal (minimal clean)
+ */
+
+/* ========================================
+   TEMA BASE (PADRÃO)
+   ======================================== */
+
+:root {
+  /* Cores principais */
+  --color-primary: #005CFF;
+  --color-primary-light: #E7F0FF;
+  --color-primary-glow: #4F7FFF;
+  
+  /* Cores de status */
+  --color-success: #22C55E;
+  --color-success-light: #DCFCE7;
+  --color-danger: #EF4444;
+  --color-danger-light: #FEE2E2;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FEF3C7;
+  
+  /* Backgrounds */
+  --color-bg-page: #F3F6FF;
+  --color-bg-card: #FFFFFF;
+  --color-bg-hover: #F8FAFF;
+  --color-bg-muted: #F9FAFB;
+  
+  /* Textos */
+  --color-text-main: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #6B7280;
+  --color-text-light: #9CA3AF;
+  
+  /* Bordas */
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  
+  /* Raios e sombras */
+  --radius-card: 14px;
+  --radius-button: 8px;
+  --shadow-card: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --shadow-card-hover: 0 12px 32px rgba(15, 23, 42, 0.1);
+  --shadow-card-premium: 0 8px 24px rgba(0, 92, 255, 0.08);
+  
+  /* Transições */
+  --transition-smooth: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.1s ease;
+}
+
+/* ========================================
+   TEMA: PADRÃO ATOMIC+
+   ======================================== */
+
+.theme-default {
+  --color-primary: #005CFF;
+  --color-primary-light: #E7F0FF;
+  --color-primary-glow: #4F7FFF;
+  
+  --color-bg-page: #F3F6FF;
+  --color-bg-card: #FFFFFF;
+  --color-bg-hover: #F8FAFF;
+  --color-bg-muted: #F9FAFB;
+  
+  --color-text-main: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #6B7280;
+  --color-text-light: #9CA3AF;
+  
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  
+  --shadow-card: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --shadow-card-hover: 0 12px 32px rgba(15, 23, 42, 0.1);
+}
+
+/* ========================================
+   TEMA: MODO ESCURO
+   ======================================== */
+
+.theme-dark {
+  --color-primary: #4F46E5;
+  --color-primary-light: #312E81;
+  --color-primary-glow: #6366F1;
+  
+  --color-success: #22C55E;
+  --color-success-light: #14532D;
+  --color-danger: #EF4444;
+  --color-danger-light: #7F1D1D;
+  --color-warning: #F59E0B;
+  --color-warning-light: #78350F;
+  
+  --color-bg-page: #020617;
+  --color-bg-card: #0F172A;
+  --color-bg-hover: #1E293B;
+  --color-bg-muted: #1E293B;
+  
+  --color-text-main: #E5E7EB;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #94A3B8;
+  --color-text-light: #64748B;
+  
+  --color-border: #334155;
+  --color-border-light: #1E293B;
+  
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.6);
+  --shadow-card-hover: 0 12px 40px rgba(0, 0, 0, 0.8);
+  --shadow-card-premium: 0 8px 30px rgba(79, 70, 229, 0.2);
+}
+
+/* ========================================
+   TEMA: NEON CREATOR
+   ======================================== */
+
+.theme-neon {
+  --color-primary: #22C55E;
+  --color-primary-light: #14532D;
+  --color-primary-glow: #4ADE80;
+  
+  --color-success: #10B981;
+  --color-success-light: #064E3B;
+  --color-danger: #F43F5E;
+  --color-danger-light: #881337;
+  --color-warning: #EAB308;
+  --color-warning-light: #713F12;
+  
+  --color-bg-page: #020617;
+  --color-bg-card: #1E293B;
+  --color-bg-hover: #334155;
+  --color-bg-muted: #0F172A;
+  
+  --color-text-main: #E5E7EB;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #94A3B8;
+  --color-text-light: #64748B;
+  
+  --color-border: #334155;
+  --color-border-light: #1E293B;
+  
+  --shadow-card: 0 8px 30px rgba(34, 197, 94, 0.15);
+  --shadow-card-hover: 0 12px 40px rgba(34, 197, 94, 0.25);
+  --shadow-card-premium: 0 8px 30px rgba(34, 197, 94, 0.3);
+}
+
+/* ========================================
+   TEMA: MINIMAL CLEAN
+   ======================================== */
+
+.theme-minimal {
+  --color-primary: #0F766E;
+  --color-primary-light: #ECFEFF;
+  --color-primary-glow: #14B8A6;
+  
+  --color-success: #059669;
+  --color-success-light: #D1FAE5;
+  --color-danger: #DC2626;
+  --color-danger-light: #FEE2E2;
+  --color-warning: #D97706;
+  --color-warning-light: #FEF3C7;
+  
+  --color-bg-page: #F9FAFB;
+  --color-bg-card: #FFFFFF;
+  --color-bg-hover: #F3F4F6;
+  --color-bg-muted: #F3F4F6;
+  
+  --color-text-main: #020617;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748B;
+  --color-text-light: #94A3B8;
+  
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+  
+  --shadow-card: 0 4px 16px rgba(15, 118, 110, 0.05);
+  --shadow-card-hover: 0 8px 24px rgba(15, 118, 110, 0.1);
+  --shadow-card-premium: 0 8px 24px rgba(15, 118, 110, 0.08);
+}
+
+/* ========================================
+   UTILITÁRIOS DE TEMA
+   ======================================== */
+
+.theme-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Aplicar transições suaves em trocas de tema */
+body,
+.card,
+.button {
+  transition: var(--transition-smooth);
+}

@@ -1,0 +1,422 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   ATOMIC+ ANALYTICS — DESIGN SYSTEM
+   ============================================
+   
+   Este arquivo define TODAS as cores, fontes, sombras
+   e estilos do dashboard.
+   
+   ✏️ COMO EDITAR:
+   - Para mudar cores: edite os valores HSL abaixo
+   - Para mudar bordas: edite --radius-card
+   - Para mudar sombras: edite --shadow-*
+   
+   ⚠️ IMPORTANTE:
+   - Mantenha sempre HSL (não use HEX ou RGB)
+   - Use as variáveis CSS em vez de valores fixos
+   
+   ============================================
+*/
+
+@layer base {
+  :root {
+    /* ============================================
+       CORES PRINCIPAIS
+       ============================================ */
+    
+    /* Fundo geral com gradiente sutil */
+    --background: 221 40% 98%;           /* Cinza muito claro azulado */
+    --foreground: 215 25% 15%;           /* Texto escuro */
+
+    /* Cards e superfícies */
+    --card: 0 0% 100%;                   /* Branco puro */
+    --card-foreground: 215 25% 15%;      /* Texto nos cards */
+
+    /* Popovers e tooltips */
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    /* ============================================
+       COR PRIMÁRIA (Azul #005CFF)
+       Use para: botões principais, links, destaques
+       ============================================ */
+    --primary: 217 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    /* ============================================
+       COR SECUNDÁRIA
+       Use para: backgrounds sutis, áreas menos importantes
+       ============================================ */
+    --secondary: 214 20% 96%;
+    --secondary-foreground: 215 25% 15%;
+
+    /* ============================================
+       COR DE SUCESSO (Verde #18A34A)
+       Use para: leads, conversões, crescimento
+       ============================================ */
+    --success: 142 71% 37%;
+    --success-foreground: 0 0% 100%;
+
+    /* ============================================
+       COR MUTED (Textos secundários)
+       Use para: legendas, subtítulos, informações menores
+       ============================================ */
+    --muted: 214 17% 95%;
+    --muted-foreground: 0 0% 48%;        /* Cinza médio #7A7A7A */
+
+    /* ============================================
+       COR ACCENT (Destaque alternativo)
+       Use para: elementos de destaque que não são primários
+       ============================================ */
+    --accent: 142 71% 37%;
+    --accent-foreground: 0 0% 100%;
+
+    /* ============================================
+       COR DE ALERTA/ERRO (Vermelho #E53935)
+       Use para: alertas, erros, valores negativos
+       ============================================ */
+    --destructive: 4 90% 58%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* ============================================
+       COR DE AVISO (Laranja/Amarelo)
+       Use para: avisos, situações de atenção
+       ============================================ */
+    --warning: 28 90% 51%;
+    --warning-foreground: 0 0% 100%;
+
+    /* ============================================
+       BORDAS E INPUTS
+       ============================================ */
+    --border: 214 20% 91%;               /* Cinza claro para bordas */
+    --input: 214 20% 91%;                /* Cor de fundo dos inputs */
+    --ring: 217 100% 50%;                /* Cor do focus ring */
+
+    /* ============================================
+       RAIOS DE BORDA (Border Radius)
+       Edite aqui para mudar o arredondamento de TODOS os componentes
+       ============================================ */
+    --radius: 0.875rem;                  /* 14px - Padrão geral */
+    --radius-card: 0.875rem;             /* 14px - Cards */
+    --radius-button: 0.5rem;             /* 8px - Botões */
+
+    /* ============================================
+       CORES ESPECÍFICAS PARA MÉTRICAS
+       Cada tipo de métrica tem sua cor para facilitar identificação
+       ============================================ */
+    --metric-revenue: 217 100% 50%;      /* Azul - Faturamento */
+    --metric-leads: 142 71% 45%;         /* Verde - Leads */
+    --metric-conversion: 271 51% 60%;    /* Roxo - Conversão */
+    --metric-traffic: 28 90% 51%;        /* Laranja - Tráfego */
+    
+    /* ============================================
+       GRADIENTES
+       Use para: botões, headers, destaques visuais
+       ============================================ */
+    --gradient-primary-start: 217 100% 50%;
+    --gradient-primary-end: 224 76% 48%;
+    --gradient-accent-start: 142 71% 45%;
+    --gradient-accent-end: 158 64% 52%;
+
+    /* ============================================
+       SOMBRAS (Shadows)
+       Edite aqui para mudar a profundidade visual dos elementos
+       ============================================ */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);              /* Sombra pequena */
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08);           /* Sombra média */
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08);         /* Sombra grande */
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);          /* Sombra extra grande */
+    --shadow-glow: 0 0 20px rgb(0 92 255 / 0.15);            /* Brilho azul */
+    --shadow-card: 0 8px 24px rgb(15 23 42 / 0.06);          /* Sombra dos cards */
+    --shadow-card-hover: 0 12px 24px -4px rgb(15 23 42 / 0.1); /* Card ao passar mouse */
+    --shadow-card-premium: 0 8px 24px rgb(15 23 42 / 0.06);  /* Card premium */
+    --shadow-chart: 0 4px 16px -2px rgb(0 0 0 / 0.06);       /* Sombra dos gráficos */
+
+    /* ============================================
+       CORES DOS GRÁFICOS
+       Usadas automaticamente pelos componentes de gráfico
+       ============================================ */
+    --chart-1: 217 100% 50%;             /* Azul - Receita */
+    --chart-2: 142 76% 45%;              /* Verde - Leads */
+    --chart-3: 271 51% 60%;              /* Roxo - Conversão */
+    --chart-4: 28 90% 51%;               /* Laranja - Tráfego */
+    --chart-5: 4 90% 58%;                /* Vermelho - Outros */
+    
+    /* ============================================
+       MÉTRICAS AJUSTADAS MANUALMENTE
+       Quando um valor é editado manualmente, recebe este estilo
+       ============================================ */
+    --metric-adjusted: 45 93% 97%;       /* Background amarelo claro */
+    --metric-adjusted-border: 28 90% 51%; /* Borda laranja */
+  }
+
+  /* Gradient utilities */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--gradient-primary-start)), hsl(var(--gradient-primary-end)));
+  }
+
+  .bg-gradient-accent {
+    background: linear-gradient(135deg, hsl(var(--gradient-accent-start)), hsl(var(--gradient-accent-end)));
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 14%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 30% 18%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 222 30% 18%;
+    --muted-foreground: 0 0% 62%;
+
+    --accent: 142 71% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 4 90% 58%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
+    --ring: 217 100% 50%;
+
+    --shadow-glow: 0 0 20px rgb(0 92 255 / 0.3);
+    --shadow-card-hover: 0 12px 24px -4px rgb(0 0 0 / 0.3);
+    --shadow-card-premium: 0 8px 24px rgb(0 0 0 / 0.15);
+    --shadow-chart: 0 4px 16px -2px rgb(0 0 0 / 0.12);
+
+    /* Chart colors for dark mode */
+    --chart-1: 217 100% 60%;
+    --chart-2: 142 71% 52%;
+    --chart-3: 271 51% 66%;
+    --chart-4: 28 90% 58%;
+    --chart-5: 4 90% 65%;
+    
+    /* Adjusted metric card background (dark) */
+    --metric-adjusted: 45 50% 20%;
+    --metric-adjusted-border: 28 90% 51%;
+  }
+}
+
+@layer utilities {
+  /* Shimmer animation for skeletons */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.5) 20%,
+      hsl(var(--muted)) 40%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+  }
+
+  /* ============================================
+     ANIMAÇÕES DO LOGIN HERO
+     ============================================ */
+
+  @keyframes metric {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes growBar {
+    0% {
+      height: 0;
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideUp {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-metric {
+    animation: metric 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.8s ease-out forwards;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ============================================
+   AUTH HERO STYLES
+   ============================================
+   Estilos para o hero da tela de login com vídeo
+   e dashboard interativo
+   ============================================ */
+
+.auth-hero {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.9));
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-hero video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.auth-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top left, rgba(255,255,255,0.15), transparent 50%),
+              linear-gradient(to bottom right, rgba(15,23,42,0.35), rgba(15,23,42,0.6));
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.auth-hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+  min-height: 100vh;
+}
+
+.hero-dashboard-preview {
+  width: 100%;
+  max-width: 520px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+/* Hero Dashboard Full */
+.hero-dashboard-full {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 40px;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  will-change: transform, opacity;
+  overflow: hidden;
+}
+
+.hero-dashboard-header {
+  padding: 16px 20px;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.hero-dashboard-metrics-full {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.hero-metric-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: all 0.2s ease-out;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.hero-metric-card:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.12));
+}
+
+.hero-dashboard-chart-large {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1000px;
+}
+
+/* Responsivo */
+@media (max-width: 1024px) {
+  .hero-dashboard-full {
+    display: none;
+  }
+}
