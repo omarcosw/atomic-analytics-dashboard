@@ -20,7 +20,7 @@
  * - Este objeto é atualizado automaticamente
  */
 
-export let userMappings: Record<string, Record<string, string>> = {
+export const userMappings: Record<string, Record<string, string>> = {
   "sheet-1": {
     "Leads Captados": "C",
     "Vendas Confirmadas": "D",

@@ -15,6 +15,8 @@
  */
 
 import { ReactNode } from "react";
+import { TechBackground } from "@/components/layout/TechBackground";
+import { cn } from "@/lib/utils";
 
 interface PageLayoutProps {
   children: ReactNode;
@@ -22,26 +24,20 @@ interface PageLayoutProps {
   fullHeight?: boolean; // Se deve ocupar altura total da tela
 }
 
-export const PageLayout = ({ 
-  children, 
+export const PageLayout = ({
+  children,
   maxWidth = "1600px",
-  fullHeight = true 
+  fullHeight = true,
 }: PageLayoutProps) => {
   return (
-    <div 
-      className={`${fullHeight ? 'min-h-screen flex flex-col' : ''}`}
-      style={{ 
-        background: 'linear-gradient(to bottom right, var(--bg-gradient-from), var(--bg-gradient-to))'
-      }}
-    >
-      <div className="flex-1">
-        <div 
-          className="mx-auto px-8 py-8"
-          style={{ maxWidth }}
-        >
-          {children}
+    <TechBackground>
+      <div className={cn(fullHeight && "min-h-screen flex flex-col")}>
+        <div className="flex-1">
+          <div className="mx-auto px-6 py-10 w-full" style={{ maxWidth }}>
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+    </TechBackground>
   );
 };

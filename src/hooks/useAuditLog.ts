@@ -16,7 +16,7 @@ export type AuditAction =
 interface AuditLogParams {
   action: AuditAction;
   projectId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export const useAuditLog = () => {

@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Building2, Palette, UserPlus, Eye, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { TechBackground } from "@/components/layout/TechBackground";
 
 interface Client {
   id: string;
@@ -113,32 +114,33 @@ const Agency = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+    <TechBackground>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/projects")}>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/projects")} className="text-white/70 hover:text-white">
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+              <p className="text-xs uppercase tracking-[0.35em] text-white/50">Atomic+ Agency</p>
+              <h1 className="text-3xl font-bold text-white flex items-center gap-2">
                 <Building2 className="h-8 w-8" />
                 Painel de Agência
               </h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-white/70 mt-1">
                 Gerencie clientes e personalize sua marca
               </p>
             </div>
           </div>
         </div>
 
-        <Tabs defaultValue="clients" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="clients">
+        <Tabs defaultValue="clients" className="space-y-6 text-white">
+          <TabsList className="grid w-full max-w-md grid-cols-2 bg-white/5 border border-white/10 p-1 rounded-2xl">
+            <TabsTrigger value="clients" className="rounded-xl data-[state=active]:bg-white data-[state=active]:text-[#030711]">
               <Users className="h-4 w-4 mr-2" />
               Clientes
             </TabsTrigger>
-            <TabsTrigger value="branding">
+            <TabsTrigger value="branding" className="rounded-xl data-[state=active]:bg-white data-[state=active]:text-[#030711]">
               <Palette className="h-4 w-4 mr-2" />
               Whitelabel
             </TabsTrigger>
@@ -149,11 +151,11 @@ const Agency = () => {
               <h2 className="text-xl font-semibold">Meus Clientes</h2>
               <Dialog open={isAddClientOpen} onOpenChange={setIsAddClientOpen}>
                 <DialogTrigger asChild>
-                  <Button>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Adicionar Cliente
-                  </Button>
-                </DialogTrigger>
+              <Button className="bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 text-[#030711] font-semibold hover:brightness-110">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Adicionar Cliente
+              </Button>
+            </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Adicionar Novo Cliente</DialogTitle>
@@ -218,11 +220,11 @@ const Agency = () => {
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-muted-foreground">Projetos</p>
+                        <p className="text-white/60">Projetos</p>
                         <p className="text-2xl font-bold">{client.projectCount}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Receita Total</p>
+                        <p className="text-white/60">Receita Total</p>
                         <p className="text-2xl font-bold">
                           {new Intl.NumberFormat("pt-BR", {
                             style: "currency",
@@ -359,13 +361,16 @@ const Agency = () => {
                         {agencyBrand.brandName}
                       </h2>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/60">
                       Assim seus dashboards públicos aparecerão para os clientes
                     </p>
                   </div>
                 </div>
 
-                <Button onClick={handleUpdateBrand} className="w-full">
+                <Button
+                  onClick={handleUpdateBrand}
+                  className="w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 font-semibold hover:brightness-110"
+                >
                   Salvar Configurações
                 </Button>
               </CardContent>
@@ -373,7 +378,7 @@ const Agency = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </TechBackground>
   );
 };
 

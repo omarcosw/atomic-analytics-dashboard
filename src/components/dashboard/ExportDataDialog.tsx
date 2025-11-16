@@ -12,15 +12,27 @@ import { Download, FileSpreadsheet, FileJson, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 
+type MetricForExport = {
+  name: string;
+  value: number;
+  valueType: "number" | "currency" | "percent";
+  overriddenValue?: number | null;
+};
+
+type SnapshotEntry = Record<string, unknown>;
+type GoalRecord = Record<string, number | string>;
+type AlertRecord = { type?: string; message?: string; date?: string };
+type ForecastRecord = Record<string, unknown>;
+
 interface ExportDataDialogProps {
   projectData: {
     id: string;
     name: string;
-    metrics: any[];
-    snapshots?: any[];
-    goals?: any;
-    alerts?: any[];
-    forecasts?: any[];
+    metrics: MetricForExport[];
+    snapshots?: SnapshotEntry[];
+    goals?: GoalRecord;
+    alerts?: AlertRecord[];
+    forecasts?: ForecastRecord[];
   };
 }
 
@@ -41,10 +53,10 @@ export const ExportDataDialog = ({ projectData }: ExportDataDialogProps) => {
         tipo: m.valueType,
         manual: m.overriddenValue ? 'Sim' : 'Não',
       })),
-      snapshots: projectData.snapshots || [],
-      metas: projectData.goals || {},
-      alertas: projectData.alerts || [],
-      projecoes: projectData.forecasts || [],
+      snapshots: projectData.snapshots ?? [],
+      metas: projectData.goals ?? {},
+      alertas: projectData.alerts ?? [],
+      projecoes: projectData.forecasts ?? [],
     };
   };
 

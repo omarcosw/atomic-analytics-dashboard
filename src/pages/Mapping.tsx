@@ -95,6 +95,7 @@ const Mapping = () => {
             variant="ghost"
             size="sm"
             onClick={() => navigate("/data-sources")}
+            className="text-white/70 hover:text-white"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
@@ -107,40 +108,42 @@ const Mapping = () => {
         />
 
         {/* Progresso */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-blue-900">
+            <span className="text-sm font-medium text-white/70">
               Progresso do mapeamento
             </span>
-            <span className="text-sm font-semibold text-blue-900">
+            <span className="text-sm font-semibold text-emerald-300">
               {completedMappings} / {metrics.length}
             </span>
           </div>
-          <div className="w-full bg-blue-200 rounded-full h-2">
+          <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-blue-600 h-2 rounded-full transition-all"
+              className="bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 h-2 rounded-full transition-all shadow-[0_10px_30px_rgba(59,130,246,0.4)]"
               style={{ width: `${(completedMappings / metrics.length) * 100}%` }}
             />
           </div>
         </div>
 
         {/* Grid de mapeamentos */}
-        <div className="bg-white border rounded-lg p-6 space-y-6">
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6 backdrop-blur-xl">
           <div className="grid gap-6 md:grid-cols-2">
             {metrics.map((metric) => (
               <div key={metric} className="space-y-2">
-                <Label className="text-sm font-semibold">{metric}</Label>
+                <Label className="text-sm font-semibold text-white/80">{metric}</Label>
                 <Select
                   value={mappings[metric] || ""}
                   onValueChange={(value) => handleColumnChange(metric, value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border-white/20 bg-white/5 text-white">
                     <SelectValue placeholder="Selecione uma coluna" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectContent className="bg-[#050b18] border border-white/10 text-white">
+                    <SelectItem value="" className="text-white/80 focus:bg-white/10 focus:text-white">
+                      Nenhuma
+                    </SelectItem>
                     {columns.map((col) => (
-                      <SelectItem key={col} value={col}>
+                      <SelectItem key={col} value={col} className="text-white/80 focus:bg-white/10 focus:text-white">
                         Coluna {col}
                       </SelectItem>
                     ))}
@@ -153,10 +156,18 @@ const Mapping = () => {
 
         {/* Ações */}
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => navigate("/data-sources")}>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/data-sources")}
+            className="border-white/30 text-white hover:bg-white/10"
+          >
             Cancelar
           </Button>
-          <Button onClick={handleSave} size="lg">
+          <Button
+            onClick={handleSave}
+            size="lg"
+            className="bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 text-[#030711] font-semibold hover:brightness-110"
+          >
             <Save className="mr-2 h-4 w-4" />
             Salvar mapeamento
           </Button>

@@ -1,5 +1,57 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+type MetricEntry = {
+  name: string;
+  value: number;
+  valueType: "number" | "currency" | "percent";
+};
+
+type AlertEntry = {
+  title: string;
+  description: string;
+};
+
+type DailyDataEntry = {
+  date: string;
+  leads: number;
+  revenue: number;
+};
+
+type ProjectContext = {
+  project: {
+    name: string;
+    type: string;
+    startDate?: string;
+    endDate?: string;
+  };
+  metrics: MetricEntry[];
+  goals: {
+    leadsTarget: number;
+    revenueTarget: number;
+    maxCPL: number;
+    minROI: number;
+  };
+  current: {
+    leads: number;
+    revenue: number;
+    cpl: number;
+    roi: number;
+  };
+  forecast: {
+    daysElapsed: number;
+    projectedLeads: number;
+    projectedRevenue: number;
+    projectedROI: number;
+  };
+  alerts: AlertEntry[];
+  dailyData?: DailyDataEntry[];
+};
+
+type RequestPayload = {
+  message: string;
+  projectContext: ProjectContext;
+};
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -11,7 +63,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, projectContext } = await req.json();
+    const { message, projectContext } = (await req.json()) as RequestPayload;
     
     console.log("Project Assistant request:", { 
       message: message.substring(0, 100),
@@ -30,7 +82,7 @@ TIPO: ${projectContext.project.type}
 PERÍODO: ${projectContext.project.startDate} até ${projectContext.project.endDate}
 
 MÉTRICAS ATUAIS:
-${projectContext.metrics.map((m: any) => `- ${m.name}: ${formatMetricValue(m)}`).join('\n')}
+${projectContext.metrics.map((m) => `- ${m.name}: ${formatMetricValue(m)}`).join('\n')}
 
 METAS DO PROJETO:
 - Leads: ${projectContext.goals.leadsTarget.toLocaleString('pt-BR')} (atual: ${projectContext.current.leads.toLocaleString('pt-BR')})
@@ -45,11 +97,11 @@ PROJEÇÕES (baseado em ${projectContext.forecast.daysElapsed} dias):
 
 ALERTAS ATIVOS:
 ${projectContext.alerts.length > 0 
-  ? projectContext.alerts.map((a: any) => `- ${a.title}: ${a.description}`).join('\n')
+  ? projectContext.alerts.map((a) => `- ${a.title}: ${a.description}`).join('\n')
   : '- Nenhum alerta no momento'}
 
 HISTÓRICO RECENTE (últimos 7 dias):
-${projectContext.dailyData ? projectContext.dailyData.map((d: any) => 
+${projectContext.dailyData ? projectContext.dailyData.map((d) => 
   `- ${d.date}: ${d.leads} leads, R$ ${d.revenue.toLocaleString('pt-BR')}`
 ).join('\n') : 'Dados históricos não disponíveis'}
 `.trim();
@@ -157,7 +209,7 @@ Responda às perguntas do usuário com base EXCLUSIVAMENTE nos dados acima.`;
   }
 });
 
-function formatMetricValue(metric: any): string {
+function formatMetricValue(metric: MetricEntry): string {
   const value = metric.value;
   switch (metric.valueType) {
     case "currency":

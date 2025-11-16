@@ -73,7 +73,11 @@ const DataSources = () => {
             title="Fontes de Dados"
             subtitle="Conecte suas planilhas e configure suas métricas."
           />
-          <Button onClick={() => setModalOpen(true)} size="lg">
+          <Button
+            onClick={() => setModalOpen(true)}
+            size="lg"
+            className="bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 text-[#030711] font-semibold hover:brightness-110"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Conectar Google Sheets
           </Button>
@@ -90,33 +94,33 @@ const DataSources = () => {
               return (
                 <div
                   key={source.id}
-                  className="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
+                  className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_25px_90px_rgba(2,6,23,0.55)] backdrop-blur-xl transition-all hover:border-white/30"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4 flex-1">
-                      <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileSpreadsheet className="w-6 h-6 text-green-600" />
+                      <div className="w-12 h-12 bg-emerald-400/10 rounded-2xl flex items-center justify-center flex-shrink-0 border border-emerald-300/30">
+                        <FileSpreadsheet className="w-6 h-6 text-emerald-200" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold mb-1">{source.name}</h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <h3 className="text-lg font-semibold text-white mb-2">{source.name}</h3>
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-white/60">
                           <div className="flex items-center gap-1">
                             {isComplete ? (
                               <>
-                                <CheckCircle className="w-4 h-4 text-green-600" />
-                                <span className="text-green-600 font-medium">Sincronizado</span>
+                                <CheckCircle className="w-4 h-4 text-emerald-300" />
+                                <span className="text-emerald-300 font-medium">Sincronizado</span>
                               </>
                             ) : (
                               <>
-                                <AlertCircle className="w-4 h-4 text-orange-600" />
-                                <span className="text-orange-600 font-medium">Configuração incompleta</span>
+                                <AlertCircle className="w-4 h-4 text-amber-300" />
+                                <span className="text-amber-300 font-medium">Configuração incompleta</span>
                               </>
                             )}
                           </div>
                           <span>•</span>
                           <span>Última sincronização: {source.lastSync}</span>
                         </div>
-                        <div className="mt-2 text-sm text-muted-foreground">
+                        <div className="mt-2 text-sm text-white/60">
                           {mappingsCount} de {totalMetrics} métricas mapeadas
                         </div>
                       </div>
@@ -126,6 +130,7 @@ const DataSources = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleEditMapping(source.id)}
+                        className="border-white/30 text-white hover:bg-white/10"
                       >
                         <Settings className="mr-2 h-4 w-4" />
                         Editar mapeamento
@@ -134,6 +139,7 @@ const DataSources = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDisconnect(source.id, source.name)}
+                        className="text-white/70 hover:text-white"
                       >
                         <Unplug className="mr-2 h-4 w-4" />
                         Desconectar
@@ -146,15 +152,19 @@ const DataSources = () => {
           </div>
         ) : (
           // Estado vazio
-          <div className="bg-white border border-dashed rounded-lg p-12 text-center">
-            <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-              <FileSpreadsheet className="w-8 h-8 text-muted-foreground" />
+          <div className="rounded-3xl border border-white/15 border-dashed bg-white/5 p-12 text-center backdrop-blur-xl">
+            <div className="mx-auto w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4 border border-white/15">
+              <FileSpreadsheet className="w-8 h-8 text-white/70" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Nenhuma fonte conectada</h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+            <h3 className="text-lg font-semibold text-white mb-2">Nenhuma fonte conectada</h3>
+            <p className="text-sm text-white/70 mb-6 max-w-md mx-auto">
               Conecte sua primeira planilha do Google Sheets para começar a importar métricas automaticamente.
             </p>
-            <Button onClick={() => setModalOpen(true)} size="lg">
+            <Button
+              onClick={() => setModalOpen(true)}
+              size="lg"
+              className="bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 text-[#030711] font-semibold hover:brightness-110"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Conectar Google Sheets
             </Button>

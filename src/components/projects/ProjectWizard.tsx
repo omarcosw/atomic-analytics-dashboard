@@ -13,35 +13,34 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, CalendarIcon, Rocket, Repeat, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAllTemplates, type DashboardTemplate } from "@/lib/dashboardTemplates";
+import { useAuth } from "@/hooks/useAuth";
+import { createProject } from "@/services/projectsService";
 
 interface ProjectWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onProjectCreated?: (projectId: string) => void;
 }
 
-const ProjectWizard = ({ open, onOpenChange }: ProjectWizardProps) => {
+const ProjectWizard = ({ open, onOpenChange, onProjectCreated }: ProjectWizardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const { user } = useAuth();
   
   // Form data
+  const templates = getAllTemplates();
   const [projectName, setProjectName] = useState("");
   const [projectType, setProjectType] = useState<"launch" | "recurring" | "other">("launch");
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
-  const [leadsTarget, setLeadsTarget] = useState("");
-  const [revenueTarget, setRevenueTarget] = useState("");
-  const [maxCPL, setMaxCPL] = useState("");
-  const [minROI, setMinROI] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState<DashboardTemplate | null>(null);
-
-  const templates = getAllTemplates();
+  const [selectedTemplate, setSelectedTemplate] = useState<DashboardTemplate | null>(templates[0] ?? null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleNext = () => {
     if (step === 1 && !projectName) {
@@ -52,55 +51,76 @@ const ProjectWizard = ({ open, onOpenChange }: ProjectWizardProps) => {
       });
       return;
     }
-    if (step < 4) setStep(step + 1);
+    if (step < 3) setStep(step + 1);
   };
 
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
   };
 
-  const handleFinish = () => {
-    const newProject = {
-      id: Date.now().toString(),
-      name: projectName,
-      type: projectType,
-      status: "preparing" as const,
-      startDate: startDate?.toISOString(),
-      endDate: endDate?.toISOString(),
-      goals: {
-        leadsTarget: leadsTarget ? parseFloat(leadsTarget) : 0,
-        revenueTarget: revenueTarget ? parseFloat(revenueTarget) : 0,
-        maxCPL: maxCPL ? parseFloat(maxCPL) : 0,
-        minROI: minROI ? parseFloat(minROI) : 0,
-      },
-      template: selectedTemplate?.id || 'lancamento-classico',
-      templateData: selectedTemplate,
-      createdAt: new Date().toISOString(),
-      lastUpdated: new Date().toISOString(),
-    };
+  const handleFinish = async () => {
+    if (!user) {
+      toast({
+        title: "Sessão expirada",
+        description: "Faça login novamente para criar um projeto.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // TODO: Save to backend/state management
-    console.log("Creating project:", newProject);
+    if (!selectedTemplate) {
+      toast({
+        title: "Escolha um template",
+        description: "Selecione um template de dashboard para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    toast({
-      title: "Projeto criado!",
-      description: `O projeto "${projectName}" foi criado com sucesso.`,
-    });
+    setIsSubmitting(true);
+    try {
+      const created = await createProject({
+        user_id: user.id,
+        name: projectName || "Projeto sem nome",
+        type: projectType,
+        status: "preparing",
+        start_date: startDate ? format(startDate, "yyyy-MM-dd") : null,
+        end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
+        goals: {
+          leadsTarget: 0,
+          revenueTarget: 0,
+          maxCPL: 0,
+          minROI: 0,
+          template: selectedTemplate.id,
+        },
+      });
 
-    onOpenChange(false);
-    navigate(`/project/${newProject.id}`);
-    
-    // Reset form
-    setStep(1);
-    setProjectName("");
-    setProjectType("launch");
-    setStartDate(undefined);
-    setEndDate(undefined);
-    setLeadsTarget("");
-    setRevenueTarget("");
-    setMaxCPL("");
-    setMinROI("");
-    setSelectedTemplate(null);
+      toast({
+        title: "Projeto criado!",
+        description: `O projeto "${projectName}" foi criado com sucesso.`,
+      });
+
+      onOpenChange(false);
+      onProjectCreated?.(created.id);
+      navigate(`/project/${created.id}`, { state: { project: created } });
+      
+      // Reset form
+      setStep(1);
+      setProjectName("");
+      setProjectType("launch");
+      setStartDate(undefined);
+      setEndDate(undefined);
+      setSelectedTemplate(templates[0] ?? null);
+    } catch (error) {
+      console.error("Error creating project:", error);
+      toast({
+        title: "Erro ao criar projeto",
+        description: "Não foi possível salvar o projeto. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -111,10 +131,9 @@ const ProjectWizard = ({ open, onOpenChange }: ProjectWizardProps) => {
             Novo Projeto
           </DialogTitle>
           <DialogDescription className="text-base">
-            Passo {step} de 4: {
+            Passo {step} de 3: {
               step === 1 ? "Informações Básicas" :
               step === 2 ? "Datas e Cronograma" :
-              step === 3 ? "Metas do Projeto" :
               "Template de Dashboard"
             }
           </DialogDescription>
@@ -257,75 +276,8 @@ const ProjectWizard = ({ open, onOpenChange }: ProjectWizardProps) => {
             </div>
           )}
 
-          {/* Step 3: Goals */}
+          {/* Step 3: Template */}
           {step === 3 && (
-            <div className="space-y-6">
-              <p className="text-muted-foreground">
-                Defina as metas principais do projeto. Você poderá ajustá-las depois.
-              </p>
-              
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="leadsTarget" className="text-base font-semibold">
-                    Meta de Leads
-                  </Label>
-                  <Input
-                    id="leadsTarget"
-                    type="number"
-                    placeholder="Ex: 1000"
-                    value={leadsTarget}
-                    onChange={(e) => setLeadsTarget(e.target.value)}
-                    className="mt-2 h-11"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="revenueTarget" className="text-base font-semibold">
-                    Meta de Receita (R$)
-                  </Label>
-                  <Input
-                    id="revenueTarget"
-                    type="number"
-                    placeholder="Ex: 50000"
-                    value={revenueTarget}
-                    onChange={(e) => setRevenueTarget(e.target.value)}
-                    className="mt-2 h-11"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="maxCPL" className="text-base font-semibold">
-                    CPL Máximo (R$)
-                  </Label>
-                  <Input
-                    id="maxCPL"
-                    type="number"
-                    placeholder="Ex: 15"
-                    value={maxCPL}
-                    onChange={(e) => setMaxCPL(e.target.value)}
-                    className="mt-2 h-11"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="minROI" className="text-base font-semibold">
-                    ROI Mínimo (%)
-                  </Label>
-                  <Input
-                    id="minROI"
-                    type="number"
-                    placeholder="Ex: 200"
-                    value={minROI}
-                    onChange={(e) => setMinROI(e.target.value)}
-                    className="mt-2 h-11"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Template */}
-          {step === 4 && (
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold mb-2">Escolha um template de dashboard</h3>
@@ -392,14 +344,18 @@ const ProjectWizard = ({ open, onOpenChange }: ProjectWizardProps) => {
             Voltar
           </Button>
 
-          {step < 4 ? (
+          {step < 3 ? (
             <Button onClick={handleNext} className="gap-2">
               Próximo
               <ChevronRight className="w-4 h-4" />
             </Button>
           ) : (
-            <Button onClick={handleFinish} className="bg-gradient-primary gap-2">
-              Criar Projeto
+            <Button
+              onClick={handleFinish}
+              className="bg-gradient-primary gap-2"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Criando..." : "Criar Projeto"}
             </Button>
           )}
         </div>

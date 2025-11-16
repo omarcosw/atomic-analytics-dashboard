@@ -13,18 +13,31 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useProjectExport } from "@/hooks/useProjectExport";
 import { useProjectImport } from "@/hooks/useProjectImport";
 
+type ProjectDialogMetrics = {
+  id: string;
+  name: string;
+  value: number;
+  valueType: "number" | "currency" | "percent";
+  isOverridden?: boolean;
+  trend?: number;
+  goal?: number;
+  sparklineData?: number[];
+};
+
+type ProjectDialogData = {
+  id: string;
+  name: string;
+  type?: string;
+  metrics: ProjectDialogMetrics[];
+  goals?: Record<string, number>;
+  snapshots?: Array<Record<string, unknown>>;
+  dashboardConfig?: Record<string, unknown>;
+};
+
 interface ProjectExportImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectData: {
-    id: string;
-    name: string;
-    type?: string;
-    metrics: any[];
-    goals?: any;
-    snapshots?: any[];
-    dashboardConfig?: any;
-  };
+  projectData: ProjectDialogData;
 }
 
 export function ProjectExportImportDialog({

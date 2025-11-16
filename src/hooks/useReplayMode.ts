@@ -13,7 +13,7 @@ type DailySnapshot = {
   conversion: number;
   ticket: number;
   investimento: number;
-  metrics_data: any;
+  metrics_data: Record<string, unknown>;
   created_at: string;
 };
 

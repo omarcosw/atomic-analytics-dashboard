@@ -27,17 +27,17 @@
        CORES PRINCIPAIS
        ============================================ */
     
-    /* Fundo geral com gradiente sutil */
-    --background: 221 40% 98%;           /* Cinza muito claro azulado */
-    --foreground: 215 25% 15%;           /* Texto escuro */
+    /* Fundo geral com gradiente escuro tecnológico */
+    --background: 220 46% 7%;            /* Azul carvão */
+    --foreground: 210 35% 92%;           /* Texto claro */
 
     /* Cards e superfícies */
-    --card: 0 0% 100%;                   /* Branco puro */
-    --card-foreground: 215 25% 15%;      /* Texto nos cards */
+    --card: 221 41% 11%;                 /* Painel escuro */
+    --card-foreground: 210 35% 92%;
 
     /* Popovers e tooltips */
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover: 221 41% 11%;
+    --popover-foreground: 210 35% 92%;
 
     /* ============================================
        COR PRIMÁRIA (Azul #005CFF)
@@ -50,8 +50,8 @@
        COR SECUNDÁRIA
        Use para: backgrounds sutis, áreas menos importantes
        ============================================ */
-    --secondary: 214 20% 96%;
-    --secondary-foreground: 215 25% 15%;
+    --secondary: 221 35% 15%;
+    --secondary-foreground: 210 35% 92%;
 
     /* ============================================
        COR DE SUCESSO (Verde #18A34A)
@@ -64,8 +64,8 @@
        COR MUTED (Textos secundários)
        Use para: legendas, subtítulos, informações menores
        ============================================ */
-    --muted: 214 17% 95%;
-    --muted-foreground: 0 0% 48%;        /* Cinza médio #7A7A7A */
+    --muted: 220 25% 18%;
+    --muted-foreground: 215 17% 78%;        /* Cinza azulado claro */
 
     /* ============================================
        COR ACCENT (Destaque alternativo)
@@ -91,8 +91,8 @@
     /* ============================================
        BORDAS E INPUTS
        ============================================ */
-    --border: 214 20% 91%;               /* Cinza claro para bordas */
-    --input: 214 20% 91%;                /* Cor de fundo dos inputs */
+    --border: 223 28% 18%;               /* Borda discreta */
+    --input: 223 28% 18%;                /* Cor de fundo dos inputs */
     --ring: 217 100% 50%;                /* Cor do focus ring */
 
     /* ============================================
@@ -130,10 +130,10 @@
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08);         /* Sombra grande */
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);          /* Sombra extra grande */
     --shadow-glow: 0 0 20px rgb(0 92 255 / 0.15);            /* Brilho azul */
-    --shadow-card: 0 8px 24px rgb(15 23 42 / 0.06);          /* Sombra dos cards */
-    --shadow-card-hover: 0 12px 24px -4px rgb(15 23 42 / 0.1); /* Card ao passar mouse */
-    --shadow-card-premium: 0 8px 24px rgb(15 23 42 / 0.06);  /* Card premium */
-    --shadow-chart: 0 4px 16px -2px rgb(0 0 0 / 0.06);       /* Sombra dos gráficos */
+    --shadow-card: 0 20px 50px rgb(2 6 23 / 0.45);           /* Sombra profunda */
+    --shadow-card-hover: 0 25px 60px -10px rgb(2 6 23 / 0.55);
+    --shadow-card-premium: 0 20px 60px rgb(15 23 42 / 0.45);
+    --shadow-chart: 0 20px 60px -15px rgb(15 23 42 / 0.6);
 
     /* ============================================
        CORES DOS GRÁFICOS
@@ -299,6 +299,11 @@
 
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(59,130,246,0.12), transparent 45%),
+      radial-gradient(circle at 80% 0%, rgba(110,231,183,0.08), transparent 40%),
+      linear-gradient(180deg, rgba(3,7,17,1) 0%, rgba(2,4,16,1) 100%);
+    min-height: 100vh;
   }
 }
 
@@ -412,6 +417,95 @@
   flex-direction: column;
   width: 100%;
   max-width: 1000px;
+}
+
+@keyframes orb-float {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(20px, -30px, 0) scale(1.05);
+  }
+  100% {
+    transform: translate3d(-20px, 30px, 0) scale(0.95);
+  }
+}
+
+.animate-orb {
+  animation: orb-float 12s ease-in-out infinite;
+}
+
+@keyframes pulse-line {
+  0% {
+    transform: translateX(-40%);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(40%);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(80%);
+    opacity: 0;
+  }
+}
+
+.animate-pulse-line {
+  animation: pulse-line 10s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+.animate-twinkle {
+  animation: twinkle 4s ease-in-out infinite;
+}
+
+@keyframes hero-glow {
+  0% {
+    filter: drop-shadow(0 0 10px rgba(59,130,246,0));
+  }
+  50% {
+    filter: drop-shadow(0 0 35px rgba(59,130,246,0.45));
+  }
+  100% {
+    filter: drop-shadow(0 0 10px rgba(59,130,246,0));
+  }
+}
+
+.animate-hero-glow {
+  animation: hero-glow 6s ease-in-out infinite;
+}
+
+@keyframes button-bounce {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.cta-bounce {
+  animation: button-bounce 3s ease-in-out infinite;
 }
 
 /* Responsivo */

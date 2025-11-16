@@ -3,22 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { useAuthFake } from "@/hooks/useAuthFake";
+import { useAuth } from "@/hooks/useAuth";
 import { HelpCircle, BookOpen, Mail, MessageCircle, ExternalLink } from "lucide-react";
 
 const Help = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthFake();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   
   // Proteção de rota
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       navigate("/auth");
     }
-  }, [isAuthenticated, navigate]);
+  }, [authLoading, isAuthenticated, navigate]);
 
   // Não renderizar nada enquanto verifica autenticação
-  if (!isAuthenticated) {
+  if (authLoading || !isAuthenticated) {
     return null;
   }
   

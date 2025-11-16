@@ -1,11 +1,13 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, TrendingUp, Users, DollarSign, Target, Bell, FileText } from "lucide-react";
 import MetricCard from "@/components/dashboard/MetricCard";
 import HeroMetricCard from "@/components/dashboard/HeroMetricCard";
+import { fetchPublicDashboardData } from "@/services/dashboardDataService";
+import { TechBackground } from "@/components/layout/TechBackground";
 import {
   LineChart,
   Line,
@@ -52,39 +54,13 @@ const leadsData = [
   { date: "07/12", value: 82 },
 ];
 
-// Mock function to verify if dashboard is active
-const getDashboardBySlug = (slug: string) => {
-  if (slug === "dash-1-a3f9d2") {
-    return { id: "1", name: "Lançamento Novembro 2024", isActive: true };
-  }
-  return null;
-};
-
 const PublicDashboard = () => {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const isTVMode = searchParams.get('tv') === 'true';
-  
-  const dashboard = getDashboardBySlug(slug || "");
-  
-  // If dashboard doesn't exist or is inactive
-  if (!dashboard || !dashboard.isActive) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F3F6FF] to-[#F9FBFF]">
-        <Card className="max-w-md w-full mx-4 p-8 text-center shadow-lg">
-          <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center mx-auto mb-4">
-            <Bell className="w-8 h-8 text-warning" />
-          </div>
-          <h1 className="text-2xl font-bold mb-2">Dashboard indisponível</h1>
-          <p className="text-muted-foreground">
-            Este dashboard está inativo no momento ou não existe.
-          </p>
-        </Card>
-      </div>
-    );
-  }
-  
-  // Mock whitelabel config
+  const [isLoading, setIsLoading] = useState(true);
+  const [project, setProject] = useState<{ name: string; is_active: boolean } | null>(null);
+  const [publicMetrics, setPublicMetrics] = useState<typeof mockMetrics>([]);
   const [whitelabel] = useState({
     enabled: false,
     logoUrl: "",
@@ -92,6 +68,74 @@ const PublicDashboard = () => {
     secondaryColor: "#8b5cf6",
     brandName: "Minha Agência",
   });
+
+  useEffect(() => {
+    const load = async () => {
+      if (!slug) return;
+      setIsLoading(true);
+      const { project, metrics } = await fetchPublicDashboardData(slug);
+      if (project) {
+        setProject({
+          name: project.name,
+          is_active: project.is_active,
+        });
+        if (metrics.length > 0) {
+          setPublicMetrics(
+            metrics.map((metric) => ({
+              id: metric.id,
+              name: metric.name,
+              value: metric.value,
+              valueType: metric.valueType,
+              isOverridden: false,
+            }))
+          );
+        } else {
+          setPublicMetrics([]);
+        }
+      } else {
+        setProject(null);
+        setPublicMetrics([]);
+      }
+      setIsLoading(false);
+    };
+
+    load();
+  }, [slug]);
+
+  const metricsToDisplay = useMemo(() => {
+    if (publicMetrics.length > 0) return publicMetrics;
+    return mockMetrics;
+  }, [publicMetrics]);
+
+  if (isLoading) {
+    return (
+      <TechBackground>
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-white/70">Carregando dashboard...</p>
+        </div>
+      </TechBackground>
+    );
+  }
+  
+  if (!project || !project.is_active) {
+    return (
+      <TechBackground>
+        <div className="min-h-screen flex items-center justify-center px-6">
+          <Card className="max-w-md w-full p-8 text-center shadow-[0_25px_90px_rgba(2,6,23,0.55)]">
+            <div className="w-16 h-16 rounded-3xl bg-amber-400/10 border border-amber-300/30 flex items-center justify-center mx-auto mb-4">
+              <Bell className="w-8 h-8 text-amber-300" />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">Dashboard indisponível</h1>
+            <p className="text-white/70">
+              Este dashboard está inativo no momento ou não existe.
+            </p>
+          </Card>
+        </div>
+      </TechBackground>
+    );
+  }
+
+  const dashboardName = project.name;
 
   const formatValue = (value: number, type: string) => {
     switch (type) {
@@ -108,29 +152,24 @@ const PublicDashboard = () => {
   };
 
   return (
-    <div 
-      className="min-h-screen flex flex-col bg-gradient-to-br from-[#F3F6FF] to-[#F9FBFF]"
-      style={whitelabel.enabled && whitelabel.primaryColor && whitelabel.secondaryColor ? {
-        background: `linear-gradient(135deg, ${whitelabel.primaryColor}08, ${whitelabel.secondaryColor}08)`
-      } : undefined}
-    >
+    <TechBackground showParticles={!isTVMode}>
       {/* Header - Hide in TV Mode */}
       {!isTVMode && (
-        <header className="border-b border-border bg-white/80 backdrop-blur-md shadow-sm">
+        <header className="border-b border-white/10 bg-white/5 backdrop-blur-xl">
           <div className="mx-auto px-8 py-6 max-w-[1600px]">
             <div className="flex items-center gap-4">
               {whitelabel.enabled && whitelabel.logoUrl && (
                 <img src={whitelabel.logoUrl} alt="Logo" className="h-10 w-auto object-contain" />
               )}
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold">{dashboard.name}</h1>
-                <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                <h1 className="text-2xl font-bold text-white">{dashboardName}</h1>
+                <Badge variant="outline" className="bg-emerald-400/10 text-emerald-200 border-emerald-300/20">
                   Visualização Pública
                 </Badge>
               </div>
               <div className="hidden">
                 <h1 className="text-2xl font-bold">Lançamento Novembro 2024</h1>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-white/60 mt-1">
                   Dashboard público - Somente visualização
                 </p>
               </div>
@@ -143,24 +182,39 @@ const PublicDashboard = () => {
         <Tabs defaultValue="overview" className="space-y-8">
           {/* Hide TabsList in TV Mode */}
           {!isTVMode && (
-            <TabsList className="inline-flex w-auto p-1 rounded-xl" style={{ backgroundColor: '#EEF2FF' }}>
-              <TabsTrigger value="overview" className="gap-2 rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-150">
+            <TabsList className="inline-flex w-auto p-1 rounded-2xl border border-white/15 bg-white/5 backdrop-blur">
+              <TabsTrigger
+                value="overview"
+                className="gap-2 rounded-xl px-4 py-2.5 text-white/60 data-[state=active]:bg-white data-[state=active]:text-[#030711] data-[state=active]:shadow-lg transition-all duration-150"
+              >
                 <BarChart3 className="w-4 h-4" />
                 <span className="hidden sm:inline font-medium">Visão Geral</span>
               </TabsTrigger>
-              <TabsTrigger value="funnel" className="gap-2 rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-150">
+              <TabsTrigger
+                value="funnel"
+                className="gap-2 rounded-xl px-4 py-2.5 text-white/60 data-[state=active]:bg-white data-[state=active]:text-[#030711] data-[state=active]:shadow-lg transition-all duration-150"
+              >
                 <TrendingUp className="w-4 h-4" />
                 <span className="hidden sm:inline font-medium">Funil</span>
               </TabsTrigger>
-              <TabsTrigger value="traffic" className="gap-2 rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-150">
+              <TabsTrigger
+                value="traffic"
+                className="gap-2 rounded-xl px-4 py-2.5 text-white/60 data-[state=active]:bg-white data-[state=active]:text-[#030711] data-[state=active]:shadow-lg transition-all duration-150"
+              >
                 <Users className="w-4 h-4" />
                 <span className="hidden sm:inline font-medium">Tráfego</span>
               </TabsTrigger>
-              <TabsTrigger value="revenue" className="gap-2 rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-150">
+              <TabsTrigger
+                value="revenue"
+                className="gap-2 rounded-xl px-4 py-2.5 text-white/60 data-[state=active]:bg-white data-[state=active]:text-[#030711] data-[state=active]:shadow-lg transition-all duration-150"
+              >
                 <DollarSign className="w-4 h-4" />
                 <span className="hidden sm:inline font-medium">Receita</span>
               </TabsTrigger>
-              <TabsTrigger value="alerts" className="gap-2 rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-150">
+              <TabsTrigger
+                value="alerts"
+                className="gap-2 rounded-xl px-4 py-2.5 text-white/60 data-[state=active]:bg-white data-[state=active]:text-[#030711] data-[state=active]:shadow-lg transition-all duration-150"
+              >
                 <Bell className="w-4 h-4" />
                 <span className="hidden sm:inline font-medium">Alertas & Metas</span>
               </TabsTrigger>
@@ -171,9 +225,7 @@ const PublicDashboard = () => {
             {/* Metrics Cards */}
             <div>
               {!isTVMode && (
-                <h2 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-8">
-                  Métricas Principais
-                </h2>
+                <h2 className="text-2xl font-bold text-white mb-8">Métricas Principais</h2>
               )}
               <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 ${isTVMode ? 'mb-10' : ''}`}>
                 {mockMetrics.map((metric) => (
@@ -183,7 +235,7 @@ const PublicDashboard = () => {
                   >
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-xs font-medium text-muted-foreground leading-tight uppercase tracking-wide">
+                        <CardTitle className="text-xs font-medium text-white/60 leading-tight uppercase tracking-wide">
                           {metric.name}
                         </CardTitle>
                         {metric.isOverridden && (
@@ -279,25 +331,25 @@ const PublicDashboard = () => {
           </TabsContent>
 
           <TabsContent value="funnel" className="space-y-4">
-            <p className="text-muted-foreground text-center py-12">
+            <p className="text-white/70 text-center py-12">
               Conteúdo da aba Funil
             </p>
           </TabsContent>
 
           <TabsContent value="traffic" className="space-y-4">
-            <p className="text-muted-foreground text-center py-12">
+            <p className="text-white/70 text-center py-12">
               Conteúdo da aba Tráfego
             </p>
           </TabsContent>
 
           <TabsContent value="revenue" className="space-y-4">
-            <p className="text-muted-foreground text-center py-12">
+            <p className="text-white/70 text-center py-12">
               Conteúdo da aba Receita
             </p>
           </TabsContent>
 
           <TabsContent value="alerts" className="space-y-4">
-            <p className="text-muted-foreground text-center py-12">
+            <p className="text-white/70 text-center py-12">
               Conteúdo da aba Alertas & Metas
             </p>
           </TabsContent>
@@ -306,8 +358,8 @@ const PublicDashboard = () => {
 
       {/* Footer - Hide in TV Mode */}
       {!isTVMode && (
-        <footer className="border-t border-border bg-card/50 mt-16">
-          <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
+        <footer className="border-t border-white/10 bg-white/5 mt-16">
+          <div className="container mx-auto px-4 py-6 text-center text-sm text-white/60">
             {whitelabel.enabled && whitelabel.brandName ? (
               <div className="flex items-center justify-center gap-2">
                 {whitelabel.logoUrl && (
@@ -321,7 +373,7 @@ const PublicDashboard = () => {
           </div>
         </footer>
       )}
-    </div>
+    </TechBackground>
   );
 };
 

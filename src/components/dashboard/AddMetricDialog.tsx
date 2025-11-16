@@ -19,23 +19,43 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 
+export type NewMetric = {
+  id: string;
+  name: string;
+  value: number;
+  valueType: "number" | "currency" | "percent";
+  visualizationType: "number" | "line_chart" | "bar_chart" | "pie_chart";
+  sections: string[];
+  isOverridden: boolean;
+  mappingType: "cell" | "column";
+};
+
 interface AddMetricDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   availableSections: Array<{ id: string; name: string }>;
-  onCreateMetric: (metric: any) => void;
+  onCreateMetric: (metric: NewMetric) => void;
 }
 
-const AddMetricDialog = ({ open, onOpenChange, availableSections, onCreateMetric }: AddMetricDialogProps) => {
-  const [mappingType, setMappingType] = useState<"cell" | "column">("cell");
+const AddMetricDialog = ({
+  open,
+  onOpenChange,
+  availableSections,
+  onCreateMetric,
+}: AddMetricDialogProps) => {
+  const [mappingType, setMappingType] =
+    useState<NewMetric["mappingType"]>("cell");
   const [metricName, setMetricName] = useState("");
-  const [valueType, setValueType] = useState("number");
-  const [visualizationType, setVisualizationType] = useState("number");
-  const [selectedSections, setSelectedSections] = useState<string[]>(["overview"]);
+  const [valueType, setValueType] = useState<NewMetric["valueType"]>("number");
+  const [visualizationType, setVisualizationType] =
+    useState<NewMetric["visualizationType"]>("number");
+  const [selectedSections, setSelectedSections] = useState<string[]>([
+    "overview",
+  ]);
 
   const toggleSection = (sectionId: string) => {
     if (selectedSections.includes(sectionId)) {
-      setSelectedSections(selectedSections.filter(id => id !== sectionId));
+      setSelectedSections(selectedSections.filter((id) => id !== sectionId));
     } else {
       setSelectedSections([...selectedSections, sectionId]);
     }
@@ -100,7 +120,10 @@ const AddMetricDialog = ({ open, onOpenChange, availableSections, onCreateMetric
 
             <div className="space-y-2">
               <Label htmlFor="visualization-type">Tipo de visualização</Label>
-              <Select value={visualizationType} onValueChange={setVisualizationType}>
+              <Select
+                value={visualizationType}
+                onValueChange={setVisualizationType}
+              >
                 <SelectTrigger id="visualization-type">
                   <SelectValue />
                 </SelectTrigger>
@@ -123,7 +146,10 @@ const AddMetricDialog = ({ open, onOpenChange, availableSections, onCreateMetric
                       checked={selectedSections.includes(section.id)}
                       onCheckedChange={() => toggleSection(section.id)}
                     />
-                    <Label htmlFor={section.id} className="cursor-pointer text-sm">
+                    <Label
+                      htmlFor={section.id}
+                      className="cursor-pointer text-sm"
+                    >
                       {section.name}
                     </Label>
                   </div>
@@ -138,7 +164,9 @@ const AddMetricDialog = ({ open, onOpenChange, availableSections, onCreateMetric
             </Label>
             <RadioGroup
               value={mappingType}
-              onValueChange={(value) => setMappingType(value as "cell" | "column")}
+              onValueChange={(value) =>
+                setMappingType(value as "cell" | "column")
+              }
               className="space-y-3"
             >
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer">
@@ -152,7 +180,10 @@ const AddMetricDialog = ({ open, onOpenChange, availableSections, onCreateMetric
               </div>
               <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer">
                 <RadioGroupItem value="column" id="mapping-column" />
-                <Label htmlFor="mapping-column" className="flex-1 cursor-pointer">
+                <Label
+                  htmlFor="mapping-column"
+                  className="flex-1 cursor-pointer"
+                >
                   <div className="font-medium">Coluna com cálculo</div>
                   <div className="text-sm text-muted-foreground">
                     Somar, contar ou calcular média de uma coluna

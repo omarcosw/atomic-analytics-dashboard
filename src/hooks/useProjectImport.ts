@@ -50,7 +50,7 @@ export const useProjectImport = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const validateImportData = (data: any): data is ProjectImportData => {
+  const validateImportData = (data: unknown): data is ProjectImportData => {
     return (
       data &&
       typeof data === "object" &&

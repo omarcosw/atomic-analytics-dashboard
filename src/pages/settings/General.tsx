@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useAuthFake } from "@/hooks/useAuthFake";
+import { useAuth } from "@/hooks/useAuth";
 import { useThemeConfig } from "@/hooks/useThemeConfig";
 import { themePresets } from "@/data/themePresets";
 import { Building2, Link as LinkIcon, Palette, Database, Info } from "lucide-react";
@@ -15,15 +15,15 @@ import { Building2, Link as LinkIcon, Palette, Database, Info } from "lucide-rea
 const General = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated } = useAuthFake();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { currentTheme, setTheme, availableThemes } = useThemeConfig();
   
   // Proteção de rota
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       navigate("/auth");
     }
-  }, [isAuthenticated, navigate]);
+  }, [authLoading, isAuthenticated, navigate]);
   
   const [workspaceName, setWorkspaceName] = useState("Atomic+ do Marcos");
   const [workspaceLogo, setWorkspaceLogo] = useState("");
@@ -41,7 +41,7 @@ const General = () => {
   };
 
   // Não renderizar nada enquanto verifica autenticação
-  if (!isAuthenticated) {
+  if (authLoading || !isAuthenticated) {
     return null;
   }
 

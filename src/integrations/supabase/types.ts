@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_metrics: {
+        Row: {
+          created_at: string
+          definition: Json
+          id: string
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          definition?: Json
+          id?: string
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          definition?: Json
+          id?: string
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -38,6 +62,33 @@ export type Database = {
           metadata?: Json | null
           project_id?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      dashboards_settings: {
+        Row: {
+          created_at: string
+          id: string
+          layout: Json
+          preferences: Json
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          layout?: Json
+          preferences?: Json
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          layout?: Json
+          preferences?: Json
+          project_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -83,6 +134,69 @@ export type Database = {
         }
         Relationships: []
       }
+      metric_values: {
+        Row: {
+          created_at: string
+          id: string
+          metric_id: string
+          ref_date: string
+          source: string | null
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metric_id: string
+          ref_date: string
+          source?: string | null
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metric_id?: string
+          ref_date?: string
+          source?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
+      metrics: {
+        Row: {
+          category: string | null
+          created_at: string
+          format: string
+          id: string
+          is_primary: boolean
+          key: string
+          label: string
+          project_id: string
+          sort_order: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          format?: string
+          id?: string
+          is_primary?: boolean
+          key: string
+          label: string
+          project_id: string
+          sort_order?: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          format?: string
+          id?: string
+          is_primary?: boolean
+          key?: string
+          label?: string
+          project_id?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       project_notes: {
         Row: {
           attachments: Json | null
@@ -116,6 +230,72 @@ export type Database = {
         }
         Relationships: []
       }
+      project_records: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload: Json
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          project_id?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          goals: Json
+          id: string
+          is_active: boolean
+          name: string
+          public_slug: string | null
+          start_date: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          goals?: Json
+          id?: string
+          is_active?: boolean
+          name: string
+          public_slug?: string | null
+          start_date?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          goals?: Json
+          id?: string
+          is_active?: boolean
+          name?: string
+          public_slug?: string | null
+          start_date?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       visual_snapshots: {
         Row: {
           created_at: string
@@ -137,6 +317,30 @@ export type Database = {
           image_url?: string
           project_id?: string
           snapshot_date?: string
+        }
+        Relationships: []
+      }
+      users_settings: {
+        Row: {
+          created_at: string
+          preferences: Json
+          theme: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          preferences?: Json
+          theme?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          preferences?: Json
+          theme?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

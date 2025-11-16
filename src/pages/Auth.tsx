@@ -6,10 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useAuthFake } from "@/hooks/useAuthFake";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, BarChart3 } from "lucide-react";
+import { TechBackground } from "@/components/layout/TechBackground";
+import { cn } from "@/lib/utils";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 type HeroMetric = {
   label: string;
@@ -26,6 +29,8 @@ type AuthInputProps = {
   value: string;
   autoComplete?: string;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: () => void;
+  error?: string | null;
 };
 
 type LoginFormProps = {
@@ -37,6 +42,10 @@ type LoginFormProps = {
   onPasswordChange: (value: string) => void;
   onRememberMeChange: (value: boolean) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onEmailBlur: () => void;
+  onPasswordBlur: () => void;
+  emailError: string | null;
+  passwordError: string | null;
 };
 
 type SignupFormProps = {
@@ -52,34 +61,30 @@ type SignupFormProps = {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-const heroMetrics: HeroMetric[] = [
-  {
-    label: "Faturamento total",
-    value: "R$ 847.392",
-    trend: "+24%",
-    trendColor: "text-emerald-300",
+const heroSnapshots = {
+  live: {
+    badge: "Ao vivo",
+    title: "Lançamento Atomic Summit",
+    metrics: [
+      { label: "Faturamento", value: "R$ 847.392", trend: "+24%", trendColor: "text-emerald-300" },
+      { label: "Leads", value: "3.247", trend: "+18%", trendColor: "text-emerald-300" },
+      { label: "ROI", value: "4,2x", trend: "+12%", trendColor: "text-emerald-300" },
+      { label: "CPL", value: "R$ 12,50", trend: "-8%", trendColor: "text-rose-300" },
+    ] satisfies HeroMetric[],
+    chart: [30, 45, 35, 60, 80, 70, 50],
   },
-  {
-    label: "Leads",
-    value: "3.247",
-    trend: "+18%",
-    trendColor: "text-emerald-300",
+  forecast: {
+    badge: "Projeção IA",
+    title: "Próxima turma · Fevereiro",
+    metrics: [
+      { label: "Receita projetada", value: "R$ 1,02M", trend: "+12%", trendColor: "text-emerald-300" },
+      { label: "Leads estimados", value: "4.680", trend: "+22%", trendColor: "text-emerald-300" },
+      { label: "ROI previsto", value: "4,8x", trend: "+9%", trendColor: "text-emerald-300" },
+      { label: "CPL meta", value: "R$ 11,30", trend: "-6%", trendColor: "text-emerald-300" },
+    ] satisfies HeroMetric[],
+    chart: [25, 40, 58, 72, 95, 110, 130],
   },
-  {
-    label: "ROI",
-    value: "4,2x",
-    trend: "+12%",
-    trendColor: "text-emerald-300",
-  },
-  {
-    label: "CPL",
-    value: "R$ 12,50",
-    trend: "-8%",
-    trendColor: "text-rose-300",
-  },
-];
-
-const heroChartData = [30, 45, 35, 60, 80, 70, 50];
+};
 
 const AuthInput = ({
   id,
@@ -89,9 +94,13 @@ const AuthInput = ({
   value,
   autoComplete,
   onChange,
+  onBlur,
+  error,
 }: AuthInputProps) => (
   <div className="space-y-2">
-    <Label htmlFor={id}>{label}</Label>
+    <Label htmlFor={id} className="text-[11px] uppercase tracking-[0.25em] text-white/60">
+      {label}
+    </Label>
     <Input
       id={id}
       type={type}
@@ -99,9 +108,11 @@ const AuthInput = ({
       value={value}
       onChange={onChange}
       autoComplete={autoComplete}
-      className="bg-white/80 border-slate-200 shadow-sm focus-visible:ring-slate-900/30"
+      onBlur={onBlur}
+      className="bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-white/40 focus-visible:ring-offset-0"
       required
     />
+    {error && <p className="text-xs text-rose-300">{error}</p>}
   </div>
 );
 
@@ -133,72 +144,73 @@ const HeroChart = ({ data }: { data: number[] }) => (
   </div>
 );
 
-const HeroShowcase = () => (
-  <div className="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-to-br from-[#1856ff] via-[#1f4fff] to-[#0f2fd1] text-white items-center justify-center px-16 py-10">
-    <div className="absolute inset-0 pointer-events-none">
-      <div className="absolute top-[-200px] left-[-200px] w-[480px] h-[480px] bg-white/10 rounded-full blur-[150px]" />
-      <div className="absolute bottom-[-150px] right-[-150px] w-[380px] h-[380px] bg-blue-300/20 rounded-full blur-[130px]" />
-    </div>
+const HeroShowcase = () => {
+  const [snapshotKey, setSnapshotKey] = useState<keyof typeof heroSnapshots>("live");
+  const snapshot = heroSnapshots[snapshotKey];
 
-    <div className="w-full max-w-xl space-y-10 relative z-10">
-      <header className="space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
-            <BarChart3 className="h-6 w-6 text-white" />
-          </div>
-          <span className="text-sm font-medium tracking-wide text-white/70">
-            Dashboard para lançamentos
-          </span>
-        </div>
-
-        <h1 className="text-3xl font-semibold text-white">
-          Atomic+ Analytics
-        </h1>
-
-        <p className="text-sm text-white/75 max-w-sm leading-relaxed">
-          Dashboards inteligentes para infoprodutores. Acompanhe suas métricas,
-          gerencie seus lançamentos e tome decisões baseadas em dados reais.
-        </p>
-      </header>
-
-      <div className="group bg-white/10 border border-white/15 rounded-3xl backdrop-blur-xl p-6 w-full shadow-[0_18px_60px_rgba(15,23,42,0.55)] transition-all duration-300 ease-out transform hover:-translate-y-2 hover:scale-[1.03] hover:shadow-[0_26px_90px_rgba(15,23,42,0.85)] hover:bg-white/14 cursor-pointer">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <p className="text-[11px] text-white/60 uppercase tracking-wide">Resumo em tempo real</p>
-            <p className="text-base font-semibold text-white mt-1">Lançamento Novembro 2024</p>
-          </div>
-          <span className="px-3 py-1 rounded-full bg-emerald-400/15 text-emerald-200 text-[11px] font-medium">
-            Demo interativo
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {heroMetrics.map((metric) => (
-            <HeroMetricCard key={metric.label} {...metric} />
-          ))}
-        </div>
-
-        <HeroChart data={heroChartData} />
+  return (
+    <div className="hidden lg:flex flex-1 relative items-center justify-center px-12 py-10">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-120px] left-[-80px] w-[360px] h-[360px] bg-blue-500/15 rounded-full blur-[140px]" />
+        <div className="absolute bottom-[-80px] right-[20px] w-[420px] h-[420px] bg-purple-500/10 rounded-full blur-[120px]" />
       </div>
 
-      <footer className="pt-4 text-[11px] text-white/40">
-        © 2024 Atomic+ Analytics. Todos os direitos reservados.
-      </footer>
+      <div className="w-full max-w-xl space-y-10 relative z-10">
+        <header className="space-y-3">
+          <h1 className="text-4xl font-semibold text-white leading-tight">
+            Seu dashboard configurado e pronto em minutos
+          </h1>
+
+          <p className="text-base text-white/70 max-w-md leading-relaxed">
+            Conecte Sheets e tráfego pago, visualize o pulso do lançamento e veja a IA sinalizar o que precisa da sua atenção agora.
+          </p>
+        </header>
+
+        <div className="group bg-white/5 border border-white/15 rounded-[28px] backdrop-blur-3xl p-6 w-full shadow-[0_25px_90px_rgba(2,6,23,0.75)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_45px_120px_rgba(2,6,23,0.85)]">
+          <div className="flex items-center justify-between mb-5 gap-4">
+            <div>
+              <p className="text-[11px] text-white/50 uppercase tracking-[0.35em]">Resumo em tempo real</p>
+              <p className="text-base font-semibold text-white mt-1">{snapshot.title}</p>
+            </div>
+            <div className="flex bg-white/10 rounded-full p-1 border border-white/10">
+              {(["live", "forecast"] as Array<keyof typeof heroSnapshots>).map((key) => (
+                <button
+                  key={key}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-xs font-medium transition",
+                    snapshotKey === key ? "bg-white text-[#030711]" : "text-white/70 hover:text-white",
+                  )}
+                  onClick={() => setSnapshotKey(key)}
+                >
+                  {heroSnapshots[key].badge}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {snapshot.metrics.map((metric) => (
+              <HeroMetricCard key={`${snapshotKey}-${metric.label}`} {...metric} />
+            ))}
+          </div>
+
+          <HeroChart data={snapshot.chart} />
+        </div>
+        <footer className="pt-6 text-[11px] text-white/40">
+          © 2024 Atomic+ Analytics. Todos os direitos reservados.
+        </footer>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const MobileLogo = () => (
   <div className="lg:hidden text-center mb-8">
-    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#1553ff] to-[#1d4ed8] mb-4 shadow-lg">
+    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 mb-4 shadow-[0_15px_45px_rgba(59,130,246,0.45)]">
       <BarChart3 className="w-8 h-8 text-white" />
     </div>
-    <h1 className="text-2xl font-bold text-slate-900">
-      Atomic+ Analytics
-    </h1>
-    <p className="text-sm text-slate-500 mt-2">
-      Monitoramento premium para métricas de lançamento.
-    </p>
+    <h1 className="text-2xl font-bold text-white">Atomic+ Analytics</h1>
+    <p className="text-sm text-white/60 mt-2">Monitoramento premium para métricas de lançamento.</p>
   </div>
 );
 
@@ -211,6 +223,10 @@ const LoginForm = ({
   onPasswordChange,
   onRememberMeChange,
   onSubmit,
+  onEmailBlur,
+  onPasswordBlur,
+  emailError,
+  passwordError,
 }: LoginFormProps) => (
   <form onSubmit={onSubmit} className="space-y-4">
     <AuthInput
@@ -221,6 +237,8 @@ const LoginForm = ({
       value={email}
       autoComplete="email"
       onChange={(event) => onEmailChange(event.target.value)}
+      onBlur={onEmailBlur}
+      error={emailError}
     />
     <AuthInput
       id="login-password"
@@ -230,28 +248,41 @@ const LoginForm = ({
       value={password}
       autoComplete="current-password"
       onChange={(event) => onPasswordChange(event.target.value)}
+      onBlur={onPasswordBlur}
+      error={passwordError}
     />
     <div className="flex items-center space-x-2">
       <Checkbox
         id="remember"
         checked={rememberMe}
         onCheckedChange={(checked) => onRememberMeChange(checked === true)}
-        className="data-[state=checked]:bg-slate-900 data-[state=checked]:border-slate-900"
+        className="border-white/40 data-[state=checked]:bg-white data-[state=checked]:border-white"
       />
       <label
         htmlFor="remember"
-        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        className="text-sm font-medium leading-none text-white/80"
       >
         Lembrar de mim
       </label>
     </div>
     <Button
       type="submit"
-      className="w-full bg-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800 transition hover:-translate-y-0.5"
-      disabled={isLoading}
+      className={cn(
+        "w-full font-semibold transition hover:-translate-y-0.5",
+        email && password && !emailError && !passwordError
+          ? "bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 text-slate-950 shadow-[0_18px_45px_rgba(59,130,246,0.45)] hover:brightness-110"
+          : "bg-white/10 text-white/50 border border-white/10 cursor-not-allowed",
+      )}
+      disabled={isLoading || !email || !password || !!emailError || !!passwordError}
     >
-      {isLoading ? "Entrando..." : "Entrar"}
+      {isLoading ? "Conectando..." : "Acessar meu painel"}
     </Button>
+    <div className="flex items-center justify-between text-xs text-white/60">
+      <span>Precisa de ajuda?</span>
+      <button type="button" className="text-white underline underline-offset-4">
+        Esqueceu sua senha?
+      </button>
+    </div>
   </form>
 );
 
@@ -305,7 +336,7 @@ const SignupForm = ({
     />
     <Button
       type="submit"
-      className="w-full bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg shadow-slate-900/15 hover:shadow-slate-900/25 transition hover:-translate-y-0.5"
+      className="w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white font-semibold shadow-[0_18px_45px_rgba(76,29,149,0.45)] hover:brightness-110 transition hover:-translate-y-0.5"
       disabled={isLoading}
     >
       {isLoading ? "Criando conta..." : "Criar conta"}
@@ -322,27 +353,33 @@ const AuthCard = ({
   loginFormProps: LoginFormProps;
   signupFormProps: SignupFormProps;
 }) => (
-  <Card className="border border-white/60 bg-white/70 backdrop-blur-xl shadow-[0_25px_70px_rgba(15,23,42,0.12)] rounded-3xl transition-all duration-500 hover:-translate-y-0.5">
+  <Card className="border border-white/10 bg-white/5 backdrop-blur-2xl shadow-[0_35px_120px_rgba(2,6,23,0.65)] rounded-[32px] transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_45px_150px_rgba(2,6,23,0.75)]">
     <CardHeader className="space-y-1">
-      <CardTitle className="text-2xl text-slate-900">Bem-vindo</CardTitle>
-      <CardDescription className="text-base text-slate-500">
+      <CardTitle className="text-3xl text-white">Bem-vindo</CardTitle>
+      <CardDescription className="text-base text-white/60">
         Entre na sua conta ou crie uma nova
       </CardDescription>
     </CardHeader>
     <CardContent>
       {error && (
-        <Alert variant="destructive" className="mb-4">
+        <Alert className="mb-4 border-red-500/40 bg-red-500/10 text-red-100">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <Tabs defaultValue="login" className="w-full mt-2">
-        <TabsList className="grid w-full grid-cols-2 bg-slate-100 rounded-2xl p-1">
-          <TabsTrigger value="login" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all">
+      <Tabs defaultValue="login" className="w-full mt-2 text-white">
+        <TabsList className="grid w-full grid-cols-2 bg-white/5 border border-white/10 rounded-2xl p-1 text-sm">
+          <TabsTrigger
+            value="login"
+            className="rounded-xl text-white/60 data-[state=active]:bg-white/90 data-[state=active]:text-[#030711] data-[state=active]:shadow-lg transition"
+          >
             Entrar
           </TabsTrigger>
-          <TabsTrigger value="signup" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all">
+          <TabsTrigger
+            value="signup"
+            className="rounded-xl text-white/60 data-[state=active]:bg-white/90 data-[state=active]:text-[#030711] data-[state=active]:shadow-lg transition"
+          >
             Criar conta
           </TabsTrigger>
         </TabsList>
@@ -362,15 +399,17 @@ const AuthCard = ({
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login, register } = useAuthFake();
-  
+  const { signIn, signUp } = useAuth();
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [loginEmailTouched, setLoginEmailTouched] = useState(false);
+  const [loginPasswordTouched, setLoginPasswordTouched] = useState(false);
   
   // Register form
   const [registerName, setRegisterName] = useState("");
@@ -380,11 +419,13 @@ const Auth = () => {
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setLoginEmailTouched(true);
+    setLoginPasswordTouched(true);
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await login(loginEmail, loginPassword);
+      const result = await signIn(loginEmail, loginPassword);
 
       if (result.success) {
         toast({
@@ -408,12 +449,25 @@ const Auth = () => {
     setError(null);
 
     try {
-      const result = await register(
-        registerName,
-        registerEmail,
-        registerPassword,
-        registerConfirmPassword
-      );
+      if (!registerName || !registerEmail || !registerPassword) {
+        setError("Todos os campos são obrigatórios");
+        setIsLoading(false);
+        return;
+      }
+
+      if (registerPassword !== registerConfirmPassword) {
+        setError("As senhas não coincidem");
+        setIsLoading(false);
+        return;
+      }
+
+      if (registerPassword.length < 6) {
+        setError("A senha deve ter no mínimo 6 caracteres");
+        setIsLoading(false);
+        return;
+      }
+
+      const result = await signUp(registerName, registerEmail, registerPassword);
 
       if (result.success) {
         toast({
@@ -431,45 +485,77 @@ const Auth = () => {
     }
   };
 
+  const loginEmailError = loginEmailTouched && !loginEmail ? "Digite o email cadastrado." : null;
+  const loginPasswordError =
+    loginPasswordTouched && loginPassword.length < 6 ? "A senha deve ter pelo menos 6 caracteres." : null;
   return (
-    <div className="relative min-h-screen flex bg-slate-950">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.1),_transparent_50%)]" />
-      <div className="absolute inset-y-0 right-0 w-1/2 bg-[linear-gradient(135deg,rgba(15,23,42,0.2),transparent)]" />
-      <HeroShowcase />
+    <TechBackground>
+      <div className="flex flex-col min-h-screen">
+        <header className="w-full px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 flex items-center justify-center shadow-[0_15px_45px_rgba(59,130,246,0.5)]">
+                <BarChart3 className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-lg font-semibold">Atomic+ Analytics</p>
+                <p className="text-xs uppercase tracking-[0.4em] text-white/50">Futuristic dashboards</p>
+              </div>
+              <LanguageSwitcher />
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                className="text-white/70 hover:text-white"
+                onClick={() => navigate("/help")}
+              >
+                Precisa de suporte?
+              </Button>
+            </div>
+          </div>
+        </header>
 
-      <div className="flex-1 flex items-center justify-center bg-slate-50/90 px-6 relative">
-        <div className="absolute top-10 right-16 hidden lg:block w-36 h-36 bg-gradient-to-br from-slate-200 to-white rounded-3xl blur-3xl opacity-70" />
-        <div className="w-full max-w-md relative z-10 space-y-8">
-          <MobileLogo />
+        <main className="flex flex-col lg:flex-row flex-1 gap-10 px-6 pb-12">
+          <HeroShowcase />
 
-          <AuthCard
-            error={error}
-            loginFormProps={{
-              email: loginEmail,
-              password: loginPassword,
-              rememberMe,
-              isLoading,
-              onEmailChange: setLoginEmail,
-              onPasswordChange: setLoginPassword,
-              onRememberMeChange: setRememberMe,
-              onSubmit: handleLogin,
-            }}
-            signupFormProps={{
-              name: registerName,
-              email: registerEmail,
-              password: registerPassword,
-              confirmPassword: registerConfirmPassword,
-              isLoading,
-              onNameChange: setRegisterName,
-              onEmailChange: setRegisterEmail,
-              onPasswordChange: setRegisterPassword,
-              onConfirmPasswordChange: setRegisterConfirmPassword,
-              onSubmit: handleSignup,
-            }}
-          />
-        </div>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="w-full max-w-md space-y-6">
+              <MobileLogo />
+
+              <AuthCard
+                error={error}
+                loginFormProps={{
+                  email: loginEmail,
+                  password: loginPassword,
+                  rememberMe,
+                  isLoading,
+                  onEmailChange: setLoginEmail,
+                  onPasswordChange: setLoginPassword,
+                  onRememberMeChange: setRememberMe,
+                  onSubmit: handleLogin,
+                  onEmailBlur: () => setLoginEmailTouched(true),
+                  onPasswordBlur: () => setLoginPasswordTouched(true),
+                  emailError: loginEmailError,
+                  passwordError: loginPasswordError,
+                }}
+                signupFormProps={{
+                  name: registerName,
+                  email: registerEmail,
+                  password: registerPassword,
+                  confirmPassword: registerConfirmPassword,
+                  isLoading,
+                  onNameChange: setRegisterName,
+                  onEmailChange: setRegisterEmail,
+                  onPasswordChange: setRegisterPassword,
+                  onConfirmPasswordChange: setRegisterConfirmPassword,
+                  onSubmit: handleSignup,
+                }}
+              />
+            </div>
+          </div>
+        </main>
       </div>
-    </div>
+    </TechBackground>
   );
 };
 

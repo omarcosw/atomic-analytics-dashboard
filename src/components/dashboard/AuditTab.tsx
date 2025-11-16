@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,11 +16,12 @@ import {
   Power,
   FileCheck
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 type AuditLog = {
   id: string;
   action: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
   created_at: string;
   user_id: string;
   project_id: string;
@@ -30,7 +31,7 @@ interface AuditTabProps {
   projectId: string;
 }
 
-const actionIcons: Record<string, any> = {
+const actionIcons: Record<string, LucideIcon> = {
   project_created: Plus,
   dashboard_activated: Power,
   dashboard_deactivated: Power,
@@ -76,11 +77,7 @@ export function AuditTab({ projectId }: AuditTabProps) {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadAuditLogs();
-  }, [projectId]);
-
-  const loadAuditLogs = async () => {
+  const loadAuditLogs = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("audit_logs")
@@ -95,9 +92,13 @@ export function AuditTab({ projectId }: AuditTabProps) {
       setLogs(data || []);
     }
     setLoading(false);
-  };
+  }, [projectId]);
 
-  const formatMetadata = (metadata: Record<string, any>) => {
+  useEffect(() => {
+    loadAuditLogs();
+  }, [loadAuditLogs]);
+
+  const formatMetadata = (metadata: Record<string, unknown>) => {
     const entries = Object.entries(metadata);
     if (entries.length === 0) return null;
 

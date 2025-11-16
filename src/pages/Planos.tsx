@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Check, Crown, Sparkles, Zap, Building2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { TechBackground } from "@/components/layout/TechBackground";
 
 const plans = [
   {
@@ -120,39 +121,44 @@ const Planos = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 py-12">
+    <TechBackground>
+      <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white/70 hover:text-white">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </div>
 
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-primary bg-clip-text text-transparent">
+          <p className="uppercase tracking-[0.35em] text-sm text-white/50">Planos Atomic+</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">
             Escolha o plano ideal para você
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-white/70 max-w-2xl mx-auto">
             Comece grátis e evolua conforme seu negócio cresce
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {plans.map((plan) => {
             const Icon = plan.icon;
             const isHighlighted = highlightedPlan === plan.id;
+            const buttonClass =
+              plan.buttonVariant === "default"
+                ? "w-full bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 text-[#030711] font-semibold hover:brightness-110"
+                : "w-full border-white/30 text-white hover:bg-white/10";
             
             return (
               <Card
                 key={plan.id}
-                className={`relative overflow-hidden transition-all hover:shadow-lg ${
+                className={`relative overflow-hidden transition-all hover:-translate-y-1 ${
                   plan.popular || isHighlighted
-                    ? "border-primary shadow-lg scale-105"
-                    : "border-border"
+                    ? "border-white/50 shadow-[0_30px_90px_rgba(59,130,246,0.4)]"
+                    : "border-white/10"
                 }`}
               >
                 {(plan.popular || isHighlighted) && (
-                  <div className="absolute top-0 right-0 bg-gradient-primary text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  <div className="absolute top-0 right-0 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
                     {isHighlighted ? "Recomendado" : "Mais Popular"}
                   </div>
                 )}
@@ -162,11 +168,11 @@ const Planos = () => {
                     <Icon className={`w-8 h-8 ${plan.color}`} />
                   </div>
                   <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                  <CardDescription className="text-sm">{plan.description}</CardDescription>
+                  <CardDescription className="text-sm text-white/70">{plan.description}</CardDescription>
                   <div className="mt-4">
                     <div className="flex items-baseline gap-1">
                       <span className={`text-4xl font-bold ${plan.color}`}>{plan.price}</span>
-                      {plan.period && <span className="text-muted-foreground text-sm">{plan.period}</span>}
+                      {plan.period && <span className="text-white/60 text-sm">{plan.period}</span>}
                     </div>
                   </div>
                 </CardHeader>
@@ -182,11 +188,11 @@ const Planos = () => {
                   </ul>
 
                   {plan.limitations && (
-                    <div className="pt-4 border-t border-border">
+                    <div className="pt-4 border-t border-white/10">
                       <ul className="space-y-2">
                         {plan.limitations.map((limitation, index) => (
                           <li key={index} className="flex items-start gap-2">
-                            <span className="text-muted-foreground text-sm">✕ {limitation}</span>
+                            <span className="text-white/50 text-sm">✕ {limitation}</span>
                           </li>
                         ))}
                       </ul>
@@ -195,11 +201,7 @@ const Planos = () => {
                 </CardContent>
 
                 <CardFooter>
-                  <Button
-                    className="w-full"
-                    variant={plan.buttonVariant}
-                    onClick={() => handleSelectPlan(plan.id)}
-                  >
+                  <Button className={buttonClass} variant={plan.buttonVariant} onClick={() => handleSelectPlan(plan.id)}>
                     {plan.id === "free" && "Começar Grátis"}
                     {plan.id === "pro" && "Assinar Pro"}
                     {plan.id === "agency" && "Assinar Agency"}
@@ -212,15 +214,15 @@ const Planos = () => {
         </div>
 
         <div className="mt-16 text-center">
-          <p className="text-muted-foreground mb-4">
+          <p className="text-white/70 mb-4">
             Tem dúvidas sobre qual plano escolher?
           </p>
-          <Button variant="outline" size="lg">
+          <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10">
             Falar com Especialista
           </Button>
         </div>
       </div>
-    </div>
+    </TechBackground>
   );
 };
 

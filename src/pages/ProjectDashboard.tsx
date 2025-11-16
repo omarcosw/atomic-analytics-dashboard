@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, RefreshCw, Settings, BarChart3, TrendingUp, Users, DollarSign, Target, Bell, ExternalLink, Copy, CheckCircle2, FileText, Sparkles, ClipboardCheck, History, Image as ImageIcon, Presentation, FileDown, StickyNote, FileSpreadsheet, AlertCircle, Layout } from "lucide-react";
 import { hasConnectedSource } from "@/data/userMappings";
 import { useLayoutConfig } from "@/hooks/useLayoutConfig";
-import { useAuthFake } from "@/hooks/useAuthFake";
+import { useAuth } from "@/hooks/useAuth";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { SourceStatusBanner } from "@/components/dashboard/SourceStatusBanner";
 import { DashboardActionsBar } from "@/components/dashboard/DashboardActionsBar";
@@ -15,7 +15,7 @@ import MetricCard from "@/components/dashboard/MetricCard";
 import HeroMetricCard from "@/components/dashboard/HeroMetricCard";
 import { MetricCardSkeleton, HeroMetricCardSkeleton, ChartSkeleton } from "@/components/dashboard/MetricCardSkeleton";
 import MetricConfigDialog from "@/components/dashboard/MetricConfigDialog";
-import AddMetricDialog from "@/components/dashboard/AddMetricDialog";
+import AddMetricDialog, { NewMetric } from "@/components/dashboard/AddMetricDialog";
 import DashboardConfigDialog from "@/components/dashboard/DashboardConfigDialog";
 import AlertsGoalsTab from "@/components/dashboard/AlertsGoalsTab";
 import DebriefTab from "@/components/dashboard/DebriefTab";
@@ -24,18 +24,18 @@ import CompareProjectsDialog from "@/components/dashboard/CompareProjectsDialog"
 import AIAssistantTab from "@/components/dashboard/AIAssistantTab";
 import { ExportDataDialog } from "@/components/dashboard/ExportDataDialog";
 import { OperationsTab } from "@/components/dashboard/OperationsTab";
-import { AuditTab } from "@/components/dashboard/AuditTab";
-import { VisualHistoryTab } from "@/components/dashboard/VisualHistoryTab";
 import { ExecutiveView } from "@/components/dashboard/ExecutiveView";
 import { NotesTab } from "@/components/dashboard/NotesTab";
 import { LayoutConfigPanel } from "@/components/dashboard/LayoutConfigPanel";
 import { ChartCard } from "@/components/ChartCard";
-import { useMetricsCache } from "@/hooks/useMetricsCache";
-import { cacheManager } from "@/utils/cacheManager";
 import { useReplayMode } from "@/hooks/useReplayMode";
 import { ReplayControls } from "@/components/dashboard/ReplayControls";
 import { ProjectExportImportDialog } from "@/components/dashboard/ProjectExportImportDialog";
 import { useToast } from "@/hooks/use-toast";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import type { DashboardProject } from "@/services/dashboardDataService";
+import { updateProject, generatePublicSlug } from "@/services/projectsService";
+import { TechBackground } from "@/components/layout/TechBackground";
 import {
   LineChart,
   Line,
@@ -73,8 +73,19 @@ import {
   retencaoData
 } from "@/data/demoCharts";
 
+type DashboardMetricCard = {
+  id: string;
+  name: string;
+  value: number;
+  valueType: "number" | "currency" | "percent";
+  isOverridden: boolean;
+  trend?: number;
+  goal?: number;
+  sparklineData?: number[];
+};
+
 // Mock data - métricas expandidas organizadas por aba
-const mockMetrics = {
+const mockMetrics: Record<string, DashboardMetricCard> = {
   // Visão Geral (todos)
   faturamento: { id: "1", name: "Faturamento Total", value: 47580.50, valueType: "currency" as const, isOverridden: false, trend: 12.6, goal: 120000, sparklineData: [2800, 3200, 2900, 4100, 3800, 5100, 4700] },
   leads: { id: "2", name: "Leads Captados", value: 1247, valueType: "number" as const, isOverridden: false, trend: 8.2, sparklineData: [48, 60, 52, 74, 69, 88, 81] },
@@ -117,8 +128,15 @@ const mockMetrics = {
   clientesAtivos: { id: "l5", name: "Clientes Ativos", value: 1420, valueType: "number" as const, isOverridden: false, trend: 11.5, sparklineData: [1100, 1180, 1240, 1300, 1360, 1400, 1420] },
 };
 
+const metricLabelToKey: Record<string, keyof typeof mockMetrics> = {
+  "Faturamento Total": "faturamento",
+  "Leads Captados": "leads",
+  "ROI": "roi",
+  "CPL (Custo por Lead)": "cpl",
+};
+
 // Mock data para gráficos - TODOS com dados demo completos
-const revenueData = [
+const defaultRevenueData = [
   { date: "01/12", value: 2800 },
   { date: "02/12", value: 3200 },
   { date: "03/12", value: 2900 },
@@ -128,7 +146,7 @@ const revenueData = [
   { date: "07/12", value: 4700 },
 ];
 
-const leadsData = [
+const defaultLeadsData = [
   { date: "01/12", value: 48 },
   { date: "02/12", value: 60 },
   { date: "03/12", value: 52 },
@@ -165,27 +183,83 @@ const cplBySourceData = [
 const ProjectDashboard = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
-  const { isAuthenticated } = useAuthFake();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const initialProject = (location.state as { project?: DashboardProject })?.project ?? null;
 
   // Proteção de rota - redirecionar para login se não autenticado
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       navigate("/auth");
     }
-  }, [isAuthenticated, navigate]);
+  }, [authLoading, isAuthenticated, navigate]);
 
   // Sistema de cache para métricas
   const {
-    metrics,
-    isLoading: metricsLoading,
-    refreshMetrics,
-    updateSingleMetric,
-    isCached
-  } = useMetricsCache(id || "");
+    project,
+    metrics: fetchedMetrics,
+    snapshots,
+    isLoading: dashboardDataLoading,
+    reload: reloadDashboardData,
+  } = useDashboardData(id, initialProject ?? undefined);
+
+  const [metrics, setMetrics] = useState<DashboardMetricCard[]>([]);
+  const metricsLoading = dashboardDataLoading && metrics.length === 0;
+
+  useEffect(() => {
+    if (fetchedMetrics.length === 0) {
+      setMetrics([]);
+      return;
+    }
+    const normalized = fetchedMetrics.map((metric) => ({
+      id: metric.id,
+      name: metric.name,
+      value: metric.value,
+      valueType: metric.valueType,
+      isOverridden: false,
+    }));
+    setMetrics(normalized);
+  }, [fetchedMetrics]);
+
+  const handleToggleProjectActivation = useCallback(async () => {
+    if (!project || !user) return;
+    setIsUpdatingActivation(true);
+    const nextIsActive = !project.is_active;
+    const nextSlug = nextIsActive
+      ? project.public_slug ?? generatePublicSlug(project.id)
+      : null;
+
+    try {
+      await updateProject(
+        project.id,
+        {
+          is_active: nextIsActive,
+          public_slug: nextSlug,
+        },
+        user.id,
+      );
+      await reloadDashboardData();
+      toast({
+        title: nextIsActive ? "Dashboard ativado!" : "Dashboard desativado",
+        description: nextIsActive
+          ? "Link público disponível e pronto para compartilhamento."
+          : "O link público foi removido.",
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar status do dashboard:", error);
+      toast({
+        title: "Não foi possível atualizar o dashboard",
+        description: "Tente novamente em instantes.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingActivation(false);
+    }
+  }, [project, reloadDashboardData, toast, user]);
   
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedMetric, setSelectedMetric] = useState<any | null>(null);
+  const [selectedMetric, setSelectedMetric] = useState<DashboardMetricCard | null>(null);
   const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
   const [isAddMetricDialogOpen, setIsAddMetricDialogOpen] = useState(false);
   const [isDashboardConfigOpen, setIsDashboardConfigOpen] = useState(false);
@@ -211,10 +285,58 @@ const ProjectDashboard = () => {
     loadAvailableDates,
   } = useReplayMode(id || "");
   const [lastUpdate, setLastUpdate] = useState(new Date());
-  
-  // Dashboard state
-  const [isActive, setIsActive] = useState(false);
-  const [publicSlug] = useState(`dashboard-${id}`);
+  const projectLoading = dashboardDataLoading;
+  const [isUpdatingActivation, setIsUpdatingActivation] = useState(false);
+  const projectName = project?.name ?? "Carregando projeto...";
+  const projectTypeLabel =
+    project?.type === "recurring"
+      ? "Perpétuo"
+      : project?.type === "other"
+        ? "Projeto"
+        : "Lançamento";
+  const projectGoals = (project?.goals ?? {}) as Record<string, number>;
+  const dashboardGoals = {
+    leadsTarget: Number(projectGoals.leadsTarget ?? 1500),
+    revenueTarget: Number(projectGoals.revenueTarget ?? 50000),
+    maxCPL: Number(projectGoals.maxCPL ?? 15),
+    minROI: Number(projectGoals.minROI ?? 200),
+  };
+  const projectStartDate = project?.start_date ?? undefined;
+  const projectEndDate = project?.end_date ?? undefined;
+  const getMetricValue = useCallback(
+    (label: string) => metrics.find((m) => m.name === label)?.value || 0,
+    [metrics]
+  );
+
+  const formattedSnapshots = useMemo(() => {
+    return snapshots.map((snapshot) => {
+      const dateLabel = new Date(snapshot.snapshot_date).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+      });
+      return {
+        date: dateLabel,
+        revenue: Number(snapshot.revenue ?? 0),
+        leads: Number(snapshot.leads ?? 0),
+      };
+    });
+  }, [snapshots]);
+
+  const revenueSeries = useMemo(() => {
+    const series = formattedSnapshots.map((entry) => ({
+      date: entry.date,
+      value: entry.revenue,
+    }));
+    return series.length > 0 ? series : defaultRevenueData;
+  }, [formattedSnapshots]);
+
+  const leadsSeries = useMemo(() => {
+    const series = formattedSnapshots.map((entry) => ({
+      date: entry.date,
+      value: entry.leads,
+    }));
+    return series.length > 0 ? series : defaultLeadsData;
+  }, [formattedSnapshots]);
   
   // Dashboard configuration
   const [dashboardConfig, setDashboardConfig] = useState({
@@ -298,35 +420,42 @@ const ProjectDashboard = () => {
   }, [loadAvailableDates]);
 
   // Aplicar dados do snapshot quando em modo replay
+  const resolvedMetrics = useMemo(() => {
+    const clone = JSON.parse(JSON.stringify(mockMetrics)) as typeof mockMetrics;
+    metrics.forEach(metric => {
+      const key = metricLabelToKey[metric.name];
+      if (key && clone[key]) {
+        clone[key] = {
+          ...clone[key],
+          value: metric.value,
+          valueType: metric.valueType,
+        };
+      }
+    });
+    return clone;
+  }, [metrics]);
+
   const displayMetrics = useMemo(() => {
     if (isReplayMode && snapshotData && snapshotData.metrics_data) {
       return snapshotData.metrics_data;
     }
-    return metrics.length > 0 ? metrics : Object.values(mockMetrics);
-  }, [isReplayMode, snapshotData, metrics]);
+    return Object.values(resolvedMetrics);
+  }, [isReplayMode, snapshotData, resolvedMetrics]);
 
   // Atualização inteligente de métricas
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     
     try {
-      await refreshMetrics(async () => {
-        // Simular fetch de métricas
-        // Em produção, isso viria do Supabase
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return Object.values(mockMetrics);
-      });
-      
-      // Invalidar cache de gráficos ao atualizar métricas
-      cacheManager.invalidatePattern('chart-');
-      
+      await reloadDashboardData();
       setLastUpdate(new Date());
       
       toast({
-        title: isCached ? "Cache atualizado!" : "Métricas carregadas!",
-        description: `${metrics.length} métricas ${isCached ? 're-validadas' : 'carregadas'} com sucesso.`,
+        title: "Dados atualizados!",
+        description: `${metrics.length || fetchedMetrics.length} métricas recarregadas com sucesso.`,
       });
     } catch (error) {
+      console.error("Erro ao atualizar dashboard:", error);
       toast({
         title: "Erro ao atualizar",
         description: "Não foi possível atualizar as métricas.",
@@ -335,47 +464,30 @@ const ProjectDashboard = () => {
     } finally {
       setIsRefreshing(false);
     }
-  }, [refreshMetrics, isCached, metrics.length, toast]);
+  }, [reloadDashboardData, toast, metrics.length, fetchedMetrics.length]);
 
-  const handleMetricClick = useCallback((metric: any) => {
+  const handleMetricClick = useCallback((metric: DashboardMetricCard) => {
     setSelectedMetric(metric);
     setIsConfigDialogOpen(true);
   }, []);
 
-  const handleCreateMetric = useCallback((newMetric: any) => {
-    refreshMetrics(async () => [...metrics, newMetric]);
-    toast({
-      title: "Métrica criada",
-      description: `A métrica "${newMetric.name}" foi adicionada ao dashboard.`,
-    });
-  }, [metrics, refreshMetrics, toast]);
-
-  const handleActivateDashboard = () => {
-    setIsActive(true);
-    const publicUrl = `${window.location.origin}/d/${publicSlug}`;
-    window.open(publicUrl, "_blank");
-    toast({
-      title: "Dashboard ativado!",
-      description: "Link público gerado com sucesso.",
-    });
-  };
-
-  const handleDeactivateDashboard = () => {
-    setIsActive(false);
-    toast({
-      title: "Dashboard desativado",
-      description: "O link público não está mais acessível.",
-    });
-  };
-
-  const handleCopyLink = () => {
-    const publicUrl = `${window.location.origin}/d/${publicSlug}`;
-    navigator.clipboard.writeText(publicUrl);
-    toast({
-      title: "Link copiado!",
-      description: "O link do dashboard foi copiado para a área de transferência.",
-    });
-  };
+  const handleCreateMetric = useCallback(
+    (newMetric: NewMetric) => {
+      const cachedMetric = {
+        id: newMetric.id,
+        name: newMetric.name,
+        value: newMetric.value,
+        valueType: newMetric.valueType,
+        isOverridden: newMetric.isOverridden,
+      };
+      setMetrics((prev) => [...prev, cachedMetric]);
+      toast({
+        title: "Métrica criada",
+        description: `A métrica "${newMetric.name}" foi adicionada ao dashboard.`,
+      });
+    },
+    [toast]
+  );
 
   const formatTimeSince = (date: Date) => {
     const minutes = Math.floor((new Date().getTime() - date.getTime()) / 60000);
@@ -429,8 +541,6 @@ const ProjectDashboard = () => {
     tabs.push({ value: "notes", label: "Notas", icon: StickyNote });
     tabs.push({ value: "ai-assistant", label: "IA Assistente", icon: Sparkles });
     tabs.push({ value: "debrief", label: "Debrief", icon: FileText });
-    tabs.push({ value: "audit", label: "Histórico", icon: History });
-    tabs.push({ value: "visual-history", label: "Histórico Visual", icon: ImageIcon });
     
     dashboardConfig.customSections.forEach(section => {
       tabs.push({ value: section.id, label: section.name, icon: BarChart3 });
@@ -439,36 +549,81 @@ const ProjectDashboard = () => {
     return tabs;
   }, [dashboardConfig]);
 
-  // Não renderizar nada enquanto verifica autenticação
+  if (authLoading) {
+    return (
+      <TechBackground>
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-white/70">Verificando sessão...</p>
+        </div>
+      </TechBackground>
+    );
+  }
+
   if (!isAuthenticated) {
-    return null;
+    return (
+      <TechBackground>
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
+          <p className="text-lg text-white/80">Faça login para acessar seus dashboards.</p>
+          <Button onClick={() => navigate("/auth")} className="bg-white text-[#030711] hover:bg-white/90">
+            Ir para login
+          </Button>
+        </div>
+      </TechBackground>
+    );
   }
 
   // Se estiver em modo executivo, renderizar ExecutiveView
+  if (projectLoading) {
+    return (
+      <TechBackground>
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-white/70">Carregando projeto...</p>
+        </div>
+      </TechBackground>
+    );
+  }
+
+  if (!project) {
+    return (
+      <TechBackground>
+        <div className="min-h-screen flex items-center justify-center px-6">
+          <div className="text-center space-y-4">
+            <p className="text-lg font-semibold text-white">Projeto não encontrado</p>
+            <Button onClick={() => navigate("/projects")} className="bg-white text-[#030711] hover:bg-white/90">
+              Voltar para projetos
+            </Button>
+          </div>
+        </div>
+      </TechBackground>
+    );
+  }
+
   if (isExecutiveMode) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <header className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
-          <div className="container mx-auto px-4 py-4">
+      <TechBackground>
+        <header className="border-b border-white/10 bg-white/5 backdrop-blur-xl sticky top-0 z-10 shadow-sm">
+          <div className="max-w-6xl mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate("/projects")}
+                  className="text-white/70 hover:text-white"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
                 <div>
-                  <h1 className="text-xl font-bold">Lançamento Novembro 2024</h1>
-                  <p className="text-sm text-muted-foreground">Modo Executivo</p>
+                  <h1 className="text-xl font-bold text-white">{projectName}</h1>
+                  <p className="text-sm text-white/60">Modo Executivo</p>
                 </div>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsExecutiveMode(false)}
+                className="border-white/30 text-white hover:bg-white/10"
               >
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Voltar ao Dashboard Completo
@@ -477,23 +632,26 @@ const ProjectDashboard = () => {
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-8">
+        <main className="max-w-6xl mx-auto px-6 py-10">
           <ExecutiveView
             metrics={metrics}
-            revenueData={revenueData}
-            leadsData={leadsData}
+            revenueData={revenueSeries}
+            leadsData={leadsSeries}
           />
         </main>
-      </div>
+      </TechBackground>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <TechBackground>
       {/* Dashboard Header with Activation Controls */}
       <DashboardHeader 
-        projectName="Lançamento Novembro 2024" 
-        projectId={id || "1"}
+        projectName={projectName}
+        isActive={project.is_active}
+        publicSlug={project.public_slug}
+        onToggleActive={handleToggleProjectActivation}
+        isToggling={isUpdatingActivation}
       />
 
       {/* Container principal com espaçamento */}
@@ -548,26 +706,20 @@ const ProjectDashboard = () => {
       )}
 
       {/* Container principal de conteúdo */}
-      <main className="flex-1 mx-auto w-full max-w-[1600px] px-8 py-8 bg-gradient-to-br from-[#F3F6FF] to-[#F9FBFF]" id="dashboard-content">
+      <main className="flex-1 mx-auto w-full max-w-[1600px] px-8 py-8" id="dashboard-content">
         <Tabs 
           defaultValue={visibleTabs[0]?.value || "overview"} 
           className="space-y-8"
           onValueChange={(value) => setCurrentTab(value)}
         >
-          <TabsList className="inline-flex w-auto p-1 rounded-xl" style={{ backgroundColor: '#EEF2FF' }}>
+          <TabsList className="inline-flex w-auto p-1 rounded-2xl border border-white/15 bg-white/5 backdrop-blur">
             {visibleTabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <TabsTrigger 
                   key={tab.value} 
                   value={tab.value} 
-                  className="gap-2 rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-150"
-                  style={{
-                    color: '#7A7A7A'
-                  }}
-                  data-state-active-style={{
-                    color: '#005CFF'
-                  }}
+                  className="gap-2 rounded-xl px-4 py-2.5 text-white/60 data-[state=active]:bg-white data-[state=active]:text-[#030711] data-[state=active]:shadow-lg transition-all duration-150"
                 >
                   <Icon className="w-4 h-4" />
                   <span className="hidden sm:inline font-medium">{tab.label}</span>
@@ -612,21 +764,21 @@ const ProjectDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                   {/* Hero Card - Faturamento Total */}
                   <HeroMetricCard
-                    metric={mockMetrics.faturamento as any}
-                    onClick={() => !isReplayMode && handleMetricClick(mockMetrics.faturamento)}
+                    metric={resolvedMetrics.faturamento}
+                    onClick={() => !isReplayMode && handleMetricClick(resolvedMetrics.faturamento)}
                   />
                   
                   {/* Regular Metrics Cards */}
-                  <MetricCard metric={mockMetrics.leads} onClick={() => !isReplayMode && handleMetricClick(mockMetrics.leads)} />
-                  <MetricCard metric={mockMetrics.conversao} onClick={() => !isReplayMode && handleMetricClick(mockMetrics.conversao)} />
-                  <MetricCard metric={mockMetrics.ticket} onClick={() => !isReplayMode && handleMetricClick(mockMetrics.ticket)} />
-                  <MetricCard metric={mockMetrics.roi} onClick={() => !isReplayMode && handleMetricClick(mockMetrics.roi)} />
-                  <MetricCard metric={mockMetrics.cpl} onClick={() => !isReplayMode && handleMetricClick(mockMetrics.cpl)} />
-                  <MetricCard metric={mockMetrics.rpl} onClick={() => !isReplayMode && handleMetricClick(mockMetrics.rpl)} />
-                  <MetricCard metric={mockMetrics.investimento} onClick={() => !isReplayMode && handleMetricClick(mockMetrics.investimento)} />
-                  <MetricCard metric={mockMetrics.checkouts} onClick={() => !isReplayMode && handleMetricClick(mockMetrics.checkouts)} />
-                  <MetricCard metric={mockMetrics.vendas} onClick={() => !isReplayMode && handleMetricClick(mockMetrics.vendas)} />
-                  <MetricCard metric={mockMetrics.leadsQualificados} onClick={() => !isReplayMode && handleMetricClick(mockMetrics.leadsQualificados)} />
+                  <MetricCard metric={resolvedMetrics.leads} onClick={() => !isReplayMode && handleMetricClick(resolvedMetrics.leads)} />
+                  <MetricCard metric={resolvedMetrics.conversao} onClick={() => !isReplayMode && handleMetricClick(resolvedMetrics.conversao)} />
+                  <MetricCard metric={resolvedMetrics.ticket} onClick={() => !isReplayMode && handleMetricClick(resolvedMetrics.ticket)} />
+                  <MetricCard metric={resolvedMetrics.roi} onClick={() => !isReplayMode && handleMetricClick(resolvedMetrics.roi)} />
+                  <MetricCard metric={resolvedMetrics.cpl} onClick={() => !isReplayMode && handleMetricClick(resolvedMetrics.cpl)} />
+                  <MetricCard metric={resolvedMetrics.rpl} onClick={() => !isReplayMode && handleMetricClick(resolvedMetrics.rpl)} />
+                  <MetricCard metric={resolvedMetrics.investimento} onClick={() => !isReplayMode && handleMetricClick(resolvedMetrics.investimento)} />
+                  <MetricCard metric={resolvedMetrics.checkouts} onClick={() => !isReplayMode && handleMetricClick(resolvedMetrics.checkouts)} />
+                  <MetricCard metric={resolvedMetrics.vendas} onClick={() => !isReplayMode && handleMetricClick(resolvedMetrics.vendas)} />
+                  <MetricCard metric={resolvedMetrics.leadsQualificados} onClick={() => !isReplayMode && handleMetricClick(resolvedMetrics.leadsQualificados)} />
                 </div>
               )}
             </div>
@@ -655,8 +807,8 @@ const ProjectDashboard = () => {
                       <h3 className="text-[16px] font-semibold mb-1" style={{ color: '#111827' }}>Faturamento Diário</h3>
                       <p className="text-xs text-muted-foreground">Últimos 7 dias</p>
                     </div>
-                    <ResponsiveContainer width="100%" height={340}>
-                      <AreaChart data={revenueData}>
+                  <ResponsiveContainer width="100%" height={340}>
+                    <AreaChart data={revenueSeries}>
                         <defs>
                           <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#005CFF" stopOpacity={0.3}/>
@@ -698,7 +850,7 @@ const ProjectDashboard = () => {
                       <p className="text-xs text-muted-foreground">Últimos 7 dias</p>
                     </div>
                     <ResponsiveContainer width="100%" height={340}>
-                      <AreaChart data={leadsData}>
+                      <AreaChart data={leadsSeries}>
                         <defs>
                           <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
@@ -815,14 +967,14 @@ const ProjectDashboard = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                  <MetricCard metric={mockMetrics.visitas} onClick={() => handleMetricClick(mockMetrics.visitas)} />
-                  <MetricCard metric={mockMetrics.cliquesCta} onClick={() => handleMetricClick(mockMetrics.cliquesCta)} />
-                  <MetricCard metric={mockMetrics.leads} onClick={() => handleMetricClick(mockMetrics.leads)} />
-                  <MetricCard metric={mockMetrics.checkouts} onClick={() => handleMetricClick(mockMetrics.checkouts)} />
-                  <MetricCard metric={mockMetrics.vendas} onClick={() => handleMetricClick(mockMetrics.vendas)} />
-                  <MetricCard metric={mockMetrics.taxaVisitaLead} onClick={() => handleMetricClick(mockMetrics.taxaVisitaLead)} />
-                  <MetricCard metric={mockMetrics.taxaLeadCheckout} onClick={() => handleMetricClick(mockMetrics.taxaLeadCheckout)} />
-                  <MetricCard metric={mockMetrics.taxaCheckoutVenda} onClick={() => handleMetricClick(mockMetrics.taxaCheckoutVenda)} />
+                  <MetricCard metric={resolvedMetrics.visitas} onClick={() => handleMetricClick(resolvedMetrics.visitas)} />
+                  <MetricCard metric={resolvedMetrics.cliquesCta} onClick={() => handleMetricClick(resolvedMetrics.cliquesCta)} />
+                  <MetricCard metric={resolvedMetrics.leads} onClick={() => handleMetricClick(resolvedMetrics.leads)} />
+                  <MetricCard metric={resolvedMetrics.checkouts} onClick={() => handleMetricClick(resolvedMetrics.checkouts)} />
+                  <MetricCard metric={resolvedMetrics.vendas} onClick={() => handleMetricClick(resolvedMetrics.vendas)} />
+                  <MetricCard metric={resolvedMetrics.taxaVisitaLead} onClick={() => handleMetricClick(resolvedMetrics.taxaVisitaLead)} />
+                  <MetricCard metric={resolvedMetrics.taxaLeadCheckout} onClick={() => handleMetricClick(resolvedMetrics.taxaLeadCheckout)} />
+                  <MetricCard metric={resolvedMetrics.taxaCheckoutVenda} onClick={() => handleMetricClick(resolvedMetrics.taxaCheckoutVenda)} />
                 </div>
               </div>
 
@@ -922,13 +1074,13 @@ const ProjectDashboard = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                  <MetricCard metric={mockMetrics.investimento} onClick={() => handleMetricClick(mockMetrics.investimento)} />
-                  <MetricCard metric={mockMetrics.cpl} onClick={() => handleMetricClick(mockMetrics.cpl)} />
-                  <MetricCard metric={mockMetrics.ctr} onClick={() => handleMetricClick(mockMetrics.ctr)} />
-                  <MetricCard metric={mockMetrics.cpc} onClick={() => handleMetricClick(mockMetrics.cpc)} />
-                  <MetricCard metric={mockMetrics.cpm} onClick={() => handleMetricClick(mockMetrics.cpm)} />
-                  <MetricCard metric={mockMetrics.cliques} onClick={() => handleMetricClick(mockMetrics.cliques)} />
-                  <MetricCard metric={mockMetrics.impressoes} onClick={() => handleMetricClick(mockMetrics.impressoes)} />
+                  <MetricCard metric={resolvedMetrics.investimento} onClick={() => handleMetricClick(resolvedMetrics.investimento)} />
+                  <MetricCard metric={resolvedMetrics.cpl} onClick={() => handleMetricClick(resolvedMetrics.cpl)} />
+                  <MetricCard metric={resolvedMetrics.ctr} onClick={() => handleMetricClick(resolvedMetrics.ctr)} />
+                  <MetricCard metric={resolvedMetrics.cpc} onClick={() => handleMetricClick(resolvedMetrics.cpc)} />
+                  <MetricCard metric={resolvedMetrics.cpm} onClick={() => handleMetricClick(resolvedMetrics.cpm)} />
+                  <MetricCard metric={resolvedMetrics.cliques} onClick={() => handleMetricClick(resolvedMetrics.cliques)} />
+                  <MetricCard metric={resolvedMetrics.impressoes} onClick={() => handleMetricClick(resolvedMetrics.impressoes)} />
                 </div>
               </div>
 
@@ -1049,13 +1201,13 @@ const ProjectDashboard = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                  <MetricCard metric={mockMetrics.faturamento} onClick={() => handleMetricClick(mockMetrics.faturamento)} />
-                  <MetricCard metric={mockMetrics.receitaHoje} onClick={() => handleMetricClick(mockMetrics.receitaHoje)} />
-                  <MetricCard metric={mockMetrics.ticket} onClick={() => handleMetricClick(mockMetrics.ticket)} />
-                  <MetricCard metric={mockMetrics.receitaProdutoA} onClick={() => handleMetricClick(mockMetrics.receitaProdutoA)} />
-                  <MetricCard metric={mockMetrics.receitaProdutoB} onClick={() => handleMetricClick(mockMetrics.receitaProdutoB)} />
-                  <MetricCard metric={mockMetrics.receitaProdutoC} onClick={() => handleMetricClick(mockMetrics.receitaProdutoC)} />
-                  <MetricCard metric={mockMetrics.receitaProjetada} onClick={() => handleMetricClick(mockMetrics.receitaProjetada)} />
+                  <MetricCard metric={resolvedMetrics.faturamento} onClick={() => handleMetricClick(resolvedMetrics.faturamento)} />
+                  <MetricCard metric={resolvedMetrics.receitaHoje} onClick={() => handleMetricClick(resolvedMetrics.receitaHoje)} />
+                  <MetricCard metric={resolvedMetrics.ticket} onClick={() => handleMetricClick(resolvedMetrics.ticket)} />
+                  <MetricCard metric={resolvedMetrics.receitaProdutoA} onClick={() => handleMetricClick(resolvedMetrics.receitaProdutoA)} />
+                  <MetricCard metric={resolvedMetrics.receitaProdutoB} onClick={() => handleMetricClick(resolvedMetrics.receitaProdutoB)} />
+                  <MetricCard metric={resolvedMetrics.receitaProdutoC} onClick={() => handleMetricClick(resolvedMetrics.receitaProdutoC)} />
+                  <MetricCard metric={resolvedMetrics.receitaProjetada} onClick={() => handleMetricClick(resolvedMetrics.receitaProjetada)} />
                 </div>
               </div>
 
@@ -1176,13 +1328,13 @@ const ProjectDashboard = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                  <MetricCard metric={mockMetrics.leads} onClick={() => handleMetricClick(mockMetrics.leads)} />
-                  <MetricCard metric={mockMetrics.leadsQualificados} onClick={() => handleMetricClick(mockMetrics.leadsQualificados)} />
-                  <MetricCard metric={mockMetrics.percLeadsQualificados} onClick={() => handleMetricClick(mockMetrics.percLeadsQualificados)} />
-                  <MetricCard metric={mockMetrics.ltv} onClick={() => handleMetricClick(mockMetrics.ltv)} />
-                  <MetricCard metric={mockMetrics.ltvTop20} onClick={() => handleMetricClick(mockMetrics.ltvTop20)} />
-                  <MetricCard metric={mockMetrics.churn} onClick={() => handleMetricClick(mockMetrics.churn)} />
-                  <MetricCard metric={mockMetrics.clientesAtivos} onClick={() => handleMetricClick(mockMetrics.clientesAtivos)} />
+                  <MetricCard metric={resolvedMetrics.leads} onClick={() => handleMetricClick(resolvedMetrics.leads)} />
+                  <MetricCard metric={resolvedMetrics.leadsQualificados} onClick={() => handleMetricClick(resolvedMetrics.leadsQualificados)} />
+                  <MetricCard metric={resolvedMetrics.percLeadsQualificados} onClick={() => handleMetricClick(resolvedMetrics.percLeadsQualificados)} />
+                  <MetricCard metric={resolvedMetrics.ltv} onClick={() => handleMetricClick(resolvedMetrics.ltv)} />
+                  <MetricCard metric={resolvedMetrics.ltvTop20} onClick={() => handleMetricClick(resolvedMetrics.ltvTop20)} />
+                  <MetricCard metric={resolvedMetrics.churn} onClick={() => handleMetricClick(resolvedMetrics.churn)} />
+                  <MetricCard metric={resolvedMetrics.clientesAtivos} onClick={() => handleMetricClick(resolvedMetrics.clientesAtivos)} />
                 </div>
               </div>
 
@@ -1253,7 +1405,7 @@ const ProjectDashboard = () => {
                       <p className="text-xs text-muted-foreground">Últimos 7 dias</p>
                     </div>
                     <ResponsiveContainer width="100%" height={340}>
-                      <AreaChart data={leadsData}>
+                      <AreaChart data={leadsSeries}>
                         <defs>
                           <linearGradient id="colorLeadsLTV" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
@@ -1300,9 +1452,9 @@ const ProjectDashboard = () => {
                   conversionRate: metrics.find(m => m.name === "Taxa de Conversão")?.value || 0,
                 }}
                 goals={{
-                  leadsTarget: 1500,
-                  revenueTarget: 50000,
-                  minROI: 200,
+                  leadsTarget: dashboardGoals.leadsTarget,
+                  revenueTarget: dashboardGoals.revenueTarget,
+                  minROI: dashboardGoals.minROI,
                 }}
                 daysElapsed={7}
                 totalDays={30}
@@ -1311,10 +1463,10 @@ const ProjectDashboard = () => {
               {/* Alerts & Goals Section */}
               <AlertsGoalsTab
                 goals={{
-                  leadsTarget: 1500,
-                  revenueTarget: 50000,
-                  maxCPL: 15,
-                  minROI: 200,
+                  leadsTarget: dashboardGoals.leadsTarget,
+                  revenueTarget: dashboardGoals.revenueTarget,
+                  maxCPL: dashboardGoals.maxCPL,
+                  minROI: dashboardGoals.minROI,
                 }}
                 current={{
                   leads: metrics.find(m => m.name === "Leads Captados")?.value || 0,
@@ -1331,22 +1483,17 @@ const ProjectDashboard = () => {
             <AIAssistantTab
               projectContext={{
                 project: {
-                  name: "Lançamento Novembro 2024",
-                  type: "Lançamento",
-                  startDate: "2024-11-01",
-                  endDate: "2024-11-30",
+                  name: projectName,
+                  type: projectTypeLabel,
+                  startDate: projectStartDate,
+                  endDate: projectEndDate,
                 },
                 metrics: metrics.map(m => ({
                   name: m.name,
                   value: m.value,
                   valueType: m.valueType,
                 })),
-                goals: {
-                  leadsTarget: 1500,
-                  revenueTarget: 50000,
-                  maxCPL: 15,
-                  minROI: 200,
-                },
+                goals: dashboardGoals,
                 current: {
                   leads: metrics.find(m => m.name === "Leads Captados")?.value || 0,
                   revenue: metrics.find(m => m.name === "Faturamento Total")?.value || 0,
@@ -1367,9 +1514,9 @@ const ProjectDashboard = () => {
                     ? [{ title: "ROI abaixo da meta", description: "O ROI atual está abaixo da meta de 200%" }]
                     : [],
                 ],
-                dailyData: revenueData.map(d => ({
+                dailyData: revenueSeries.map(d => ({
                   date: d.date,
-                  leads: leadsData.find(l => l.date === d.date)?.value || 0,
+                  leads: leadsSeries.find(l => l.date === d.date)?.value || 0,
                   revenue: d.value,
                 })),
               }}
@@ -1380,26 +1527,26 @@ const ProjectDashboard = () => {
           <TabsContent value="debrief" className="space-y-4">
             <DebriefTab
               project={{
-                name: "Lançamento Novembro 2024",
-                startDate: "2024-11-01",
-                endDate: "2024-11-30",
-                type: "Lançamento",
+                name: projectName,
+                startDate: projectStartDate,
+                endDate: projectEndDate,
+                type: projectTypeLabel,
               }}
               metrics={{
-                totalLeads: 1247,
-                totalRevenue: 47580.50,
-                avgTicket: 247.00,
-                roi: 285,
-                cpl: 12.50,
-                conversionRate: 3.8,
-                bestDay: { date: "2024-11-15", revenue: 5200 },
-                topSource: { name: "Facebook Ads", leads: 485, revenue: 18200 },
+                totalLeads: getMetricValue("Leads Captados"),
+                totalRevenue: getMetricValue("Faturamento Total"),
+                avgTicket: resolvedMetrics.ticket.value,
+                roi: getMetricValue("ROI"),
+                cpl: getMetricValue("CPL (Custo por Lead)"),
+                conversionRate: resolvedMetrics.conversao.value,
+                bestDay: { date: "2024-11-15", revenue: resolvedMetrics.faturamento.value },
+                topSource: { name: "Meta Ads", leads: 485, revenue: 18200 },
               }}
               goals={{
-                leadsTarget: 1500,
-                revenueTarget: 50000,
-                maxCPL: 15,
-                minROI: 200,
+                leadsTarget: dashboardGoals.leadsTarget,
+                revenueTarget: dashboardGoals.revenueTarget,
+                maxCPL: dashboardGoals.maxCPL,
+                minROI: dashboardGoals.minROI,
               }}
             />
           </TabsContent>
@@ -1412,16 +1559,6 @@ const ProjectDashboard = () => {
           {/* Notes Tab */}
           <TabsContent value="notes">
             <NotesTab projectId={id || ""} />
-          </TabsContent>
-
-          {/* Audit Tab */}
-          <TabsContent value="audit">
-            <AuditTab projectId={id || ""} />
-          </TabsContent>
-
-          {/* Visual History Tab */}
-          <TabsContent value="visual-history">
-            <VisualHistoryTab projectId={id || ""} />
           </TabsContent>
 
           {/* Custom Sections */}
@@ -1446,16 +1583,13 @@ const ProjectDashboard = () => {
         onOpenChange={setIsExportImportDialogOpen}
         projectData={{
           id: id || "",
-          name: "Lançamento Novembro 2024",
-          type: "Lançamento",
+          name: projectName,
+          type: projectTypeLabel,
+          startDate: projectStartDate,
+          endDate: projectEndDate,
           metrics: displayMetrics,
-          goals: {
-            leadsTarget: 1500,
-            revenueTarget: 50000,
-            maxCPL: 15,
-            minROI: 200,
-          },
-          snapshots: [],
+          goals: dashboardGoals,
+           snapshots,
           dashboardConfig: dashboardConfig,
         }}
       />
@@ -1479,7 +1613,7 @@ const ProjectDashboard = () => {
         onOpenChange={setIsCompareDialogOpen}
         currentProject={{
           id: id || "1",
-          name: "Lançamento Novembro 2024",
+          name: projectName,
         }}
       />
 
@@ -1490,7 +1624,7 @@ const ProjectDashboard = () => {
         metricsMap={metricsMap}
         chartsMap={chartsMap}
       />
-    </div>
+    </TechBackground>
   );
 };
 

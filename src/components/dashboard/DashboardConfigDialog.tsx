@@ -13,21 +13,23 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Plus, BarChart3, TrendingUp, Users, DollarSign, Target, Bell } from "lucide-react";
 
+type DashboardConfig = {
+  visibleSections: {
+    overview: boolean;
+    funnel: boolean;
+    traffic: boolean;
+    revenue: boolean;
+    leads: boolean;
+    alerts: boolean;
+  };
+  customSections: Array<{ id: string; name: string; icon: string }>;
+};
+
 interface DashboardConfigDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  config: {
-    visibleSections: {
-      overview: boolean;
-      funnel: boolean;
-      traffic: boolean;
-      revenue: boolean;
-      leads: boolean;
-      alerts: boolean;
-    };
-    customSections: Array<{ id: string; name: string; icon: string }>;
-  };
-  onConfigChange: (config: any) => void;
+  config: DashboardConfig;
+  onConfigChange: (config: DashboardConfig) => void;
 }
 
 const DashboardConfigDialog = ({

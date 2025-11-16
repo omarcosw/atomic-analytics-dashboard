@@ -128,30 +128,32 @@ const Onboarding = () => {
 
   return (
     <PageLayout>
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-4xl mx-auto space-y-8 text-white">
         {/* Header */}
         <div className="text-center space-y-4 py-8">
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles className="w-8 h-8 text-primary" />
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-emerald-300" />
+            </div>
             <h1 className="text-4xl font-bold">Bem-vindo ao Atomic+</h1>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-white/70 max-w-2xl mx-auto">
             Vamos configurar seu ambiente em poucos passos para você começar a acompanhar suas métricas profissionalmente.
           </p>
           
           {/* Barra de progresso */}
           <div className="max-w-md mx-auto">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">
+              <span className="text-sm font-medium text-white/60">
                 Progresso
               </span>
-              <span className="text-sm font-semibold text-primary">
+              <span className="text-sm font-semibold text-emerald-300">
                 {currentStep - 1} / 6
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
+            <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
               <div
-                className="bg-primary h-3 rounded-full transition-all duration-500"
+                className="h-3 rounded-full transition-all duration-500 bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 shadow-[0_10px_30px_rgba(59,130,246,0.4)]"
                 style={{ width: `${((currentStep - 1) / 6) * 100}%` }}
               />
             </div>
@@ -174,14 +176,14 @@ const Onboarding = () => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-8 pb-4 border-t">
-          <Button variant="ghost" onClick={handleSkip}>
+        <div className="flex items-center justify-between pt-8 pb-4 border-t border-white/10">
+          <Button variant="ghost" onClick={handleSkip} className="text-white/70 hover:text-white">
             Pular onboarding
           </Button>
           <Button
             variant="outline"
             onClick={() => navigate("/projects")}
-            className="gap-2"
+            className="gap-2 border-white/20 text-white hover:bg-white/10"
           >
             Ir para meus dashboards
             <ArrowRight className="w-4 h-4" />

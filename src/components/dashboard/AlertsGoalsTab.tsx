@@ -3,6 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle2, Target, TrendingDown, TrendingUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AlertsGoalsTabProps {
   goals: {
@@ -293,9 +294,5 @@ const AlertsGoalsTab = ({ goals, current }: AlertsGoalsTabProps) => {
     </div>
   );
 };
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
-}
 
 export default AlertsGoalsTab;

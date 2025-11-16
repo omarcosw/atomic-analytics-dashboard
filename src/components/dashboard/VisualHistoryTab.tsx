@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,15 +24,7 @@ export function VisualHistoryTab({ projectId }: VisualHistoryTabProps) {
   const [currentSnapshot, setCurrentSnapshot] = useState<VisualSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadSnapshots();
-  }, [projectId]);
-
-  useEffect(() => {
-    updateCurrentSnapshot();
-  }, [currentDate, snapshots]);
-
-  const loadSnapshots = async () => {
+  const loadSnapshots = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("visual_snapshots")
@@ -46,13 +38,21 @@ export function VisualHistoryTab({ projectId }: VisualHistoryTabProps) {
       setSnapshots(data || []);
     }
     setLoading(false);
-  };
+  }, [projectId]);
 
-  const updateCurrentSnapshot = () => {
+  const updateCurrentSnapshot = useCallback(() => {
     const dateStr = format(currentDate, "yyyy-MM-dd");
     const snapshot = snapshots.find(s => s.snapshot_date === dateStr);
     setCurrentSnapshot(snapshot || null);
-  };
+  }, [currentDate, snapshots]);
+
+  useEffect(() => {
+    loadSnapshots();
+  }, [loadSnapshots]);
+
+  useEffect(() => {
+    updateCurrentSnapshot();
+  }, [currentDate, snapshots, updateCurrentSnapshot]);
 
   const handlePreviousDay = () => {
     setCurrentDate(prev => subDays(prev, 1));

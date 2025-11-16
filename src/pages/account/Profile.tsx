@@ -6,24 +6,25 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useAuthFake } from "@/hooks/useAuthFake";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { User, Shield, Settings as SettingsIcon } from "lucide-react";
 import { useEffect } from "react";
+import { TechBackground } from "@/components/layout/TechBackground";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuthFake();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   
   // Proteção de rota
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       navigate("/auth");
     }
-  }, [isAuthenticated, navigate]);
+  }, [authLoading, isAuthenticated, navigate]);
   
-  const [name, setName] = useState(user?.name || "");
+  const [name, setName] = useState(user?.user_metadata?.full_name || user?.email || "");
   const [email, setEmail] = useState(user?.email || "");
   const [timezone, setTimezone] = useState("America/Sao_Paulo");
   const [language, setLanguage] = useState("pt-BR");
@@ -33,6 +34,11 @@ const Profile = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  useEffect(() => {
+    setName(user?.user_metadata?.full_name || user?.email || "");
+    setEmail(user?.email || "");
+  }, [user]);
+
   const handleSaveProfile = () => {
     toast({
       title: "Perfil atualizado com sucesso",
@@ -41,7 +47,7 @@ const Profile = () => {
   };
 
   // Não renderizar nada enquanto verifica autenticação
-  if (!isAuthenticated) {
+  if (authLoading || !isAuthenticated) {
     return null;
   }
 
@@ -81,21 +87,22 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <header className="border-b border-border bg-card/80 backdrop-blur-md">
-        <div className="container mx-auto px-4 py-6">
+    <TechBackground>
+      <header className="border-b border-white/10 bg-white/5 backdrop-blur-xl">
+        <div className="max-w-4xl mx-auto px-6 py-6">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">Perfil</p>
+            <h1 className="text-3xl font-bold text-white">
               Minha Conta
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-white/70 mt-2">
               Gerencie seus dados pessoais
             </p>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className="max-w-4xl mx-auto px-6 py-10">
         <div className="space-y-6">
           {/* Dados Básicos */}
           <Card>
@@ -104,7 +111,7 @@ const Profile = () => {
                 <User className="w-5 h-5 text-primary" />
                 <CardTitle>Dados básicos</CardTitle>
               </div>
-              <CardDescription>
+              <CardDescription className="text-white/70">
                 Informações pessoais da sua conta
               </CardDescription>
             </CardHeader>
@@ -128,7 +135,10 @@ const Profile = () => {
                   placeholder="seu@email.com"
                 />
               </div>
-              <Button onClick={handleSaveProfile} className="bg-gradient-primary">
+              <Button
+                onClick={handleSaveProfile}
+                className="bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 text-[#030711] font-semibold hover:brightness-110"
+              >
                 Salvar alterações
               </Button>
             </CardContent>
@@ -141,7 +151,7 @@ const Profile = () => {
                 <SettingsIcon className="w-5 h-5 text-primary" />
                 <CardTitle>Preferências</CardTitle>
               </div>
-              <CardDescription>
+              <CardDescription className="text-white/70">
                 Personalize sua experiência no Atomic+
               </CardDescription>
             </CardHeader>
@@ -149,31 +159,48 @@ const Profile = () => {
               <div className="space-y-2">
                 <Label htmlFor="timezone">Fuso horário</Label>
                 <Select value={timezone} onValueChange={setTimezone}>
-                  <SelectTrigger id="timezone">
+                  <SelectTrigger id="timezone" className="border-white/20 bg-white/5 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="America/Sao_Paulo">América/São Paulo (BRT)</SelectItem>
-                    <SelectItem value="America/New_York">América/Nova York (EST)</SelectItem>
-                    <SelectItem value="Europe/London">Europa/Londres (GMT)</SelectItem>
-                    <SelectItem value="Asia/Tokyo">Ásia/Tóquio (JST)</SelectItem>
+                  <SelectContent className="bg-[#050b18] border border-white/10 text-white">
+                    <SelectItem value="America/Sao_Paulo" className="text-white/80 focus:bg-white/10 focus:text-white">
+                      América/São Paulo (BRT)
+                    </SelectItem>
+                    <SelectItem value="America/New_York" className="text-white/80 focus:bg-white/10 focus:text-white">
+                      América/Nova York (EST)
+                    </SelectItem>
+                    <SelectItem value="Europe/London" className="text-white/80 focus:bg-white/10 focus:text-white">
+                      Europa/Londres (GMT)
+                    </SelectItem>
+                    <SelectItem value="Asia/Tokyo" className="text-white/80 focus:bg-white/10 focus:text-white">
+                      Ásia/Tóquio (JST)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="language">Idioma</Label>
                 <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger id="language">
+                  <SelectTrigger id="language" className="border-white/20 bg-white/5 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                    <SelectItem value="en-US" disabled>English (US) - Em breve</SelectItem>
-                    <SelectItem value="es-ES" disabled>Español - Em breve</SelectItem>
+                  <SelectContent className="bg-[#050b18] border border-white/10 text-white">
+                    <SelectItem value="pt-BR" className="text-white/80 focus:bg-white/10 focus:text-white">
+                      Português (Brasil)
+                    </SelectItem>
+                    <SelectItem value="en-US" disabled className="text-white/30">
+                      English (US) - Em breve
+                    </SelectItem>
+                    <SelectItem value="es-ES" disabled className="text-white/30">
+                      Español - Em breve
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleSavePreferences} className="bg-gradient-primary">
+              <Button
+                onClick={handleSavePreferences}
+                className="bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 text-[#030711] font-semibold hover:brightness-110"
+              >
                 Salvar preferências
               </Button>
             </CardContent>
@@ -186,21 +213,21 @@ const Profile = () => {
                 <Shield className="w-5 h-5 text-primary" />
                 <CardTitle>Segurança</CardTitle>
               </div>
-              <CardDescription>
+              <CardDescription className="text-white/70">
                 Gerencie a segurança da sua conta
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button 
                 variant="outline" 
-                className="w-full justify-start"
+                className="w-full justify-start border-white/30 text-white hover:bg-white/10"
                 onClick={() => setIsPasswordModalOpen(true)}
               >
                 Alterar senha
               </Button>
               <Button 
                 variant="outline" 
-                className="w-full justify-start text-destructive hover:text-destructive"
+                className="w-full justify-start border-white/30 text-white hover:bg-white/10"
                 onClick={handleLogoutAllDevices}
               >
                 Encerrar sessão em todos os dispositivos
@@ -252,16 +279,19 @@ const Profile = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsPasswordModalOpen(false)}>
+            <Button variant="outline" onClick={() => setIsPasswordModalOpen(false)} className="border-white/30 text-white hover:bg-white/10">
               Cancelar
             </Button>
-            <Button onClick={handleChangePassword} className="bg-gradient-primary">
+            <Button
+              onClick={handleChangePassword}
+              className="bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 text-[#030711] font-semibold hover:brightness-110"
+            >
               Salvar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </TechBackground>
   );
 };
 

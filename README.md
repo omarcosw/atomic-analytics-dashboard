@@ -208,6 +208,10 @@ Em `src/pages/ProjectDashboard.tsx`:
 # Instalar dependências
 npm install
 
+# Rodar Supabase (aplica migrações + seed de dados)
+supabase start
+npx supabase db reset
+
 # Rodar em desenvolvimento
 npm run dev
 
@@ -228,6 +232,17 @@ npm run preview
 - **Recharts** — Biblioteca de gráficos
 - **Vite** — Build tool rápido
 - **Shadcn/UI** — Componentes prontos
+
+---
+
+## 🔑 Acesso de Demonstração
+
+Após rodar `npx supabase db reset`, o seed cria um usuário padrão:
+
+- Email: `demo@atomic.com`
+- Senha: `atomic123`
+
+Esse usuário já vem com um projeto “Lançamento Novembro 2024” e métricas reais populadas para testar o dashboard.
 
 ---
 

@@ -292,7 +292,7 @@ export const LayoutConfigPanel = ({
                       <Select
                         value={chart.type}
                         onValueChange={(value) =>
-                          updateChartType(currentTab, chart.id, value as any)
+                          updateChartType(currentTab, chart.id, value as typeof chart.type)
                         }
                       >
                         <SelectTrigger className="h-8 text-xs">

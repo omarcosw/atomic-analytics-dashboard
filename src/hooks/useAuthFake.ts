@@ -43,7 +43,10 @@ export const useAuthFake = () => {
     };
   });
 
-  const login = (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
     return new Promise((resolve) => {
       // Simula delay de API
       setTimeout(() => {
@@ -77,7 +80,10 @@ export const useAuthFake = () => {
       setTimeout(() => {
         // Validações básicas
         if (!name || !email || !password) {
-          resolve({ success: false, error: "Todos os campos são obrigatórios" });
+          resolve({
+            success: false,
+            error: "Todos os campos são obrigatórios",
+          });
           return;
         }
 
@@ -87,7 +93,10 @@ export const useAuthFake = () => {
         }
 
         if (password.length < 6) {
-          resolve({ success: false, error: "A senha deve ter no mínimo 6 caracteres" });
+          resolve({
+            success: false,
+            error: "A senha deve ter no mínimo 6 caracteres",
+          });
           return;
         }
 
